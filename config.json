@@ -1,23 +1,24 @@
 {
-    "listen_addr": "0.0.0.0:8080",
+    "listen_addr": "0.0.0.0:80",
     "tls_listen_addr": "0.0.0.0:8443",
     "tls": {
         "cert_path": "/certs/cert.pem",
         "key_path": "/certs/key.pem",
         "enable_h2": true
     },
+    "debug_mode": true,
     "domains": {
-        "rusty.snakeface.asuscomm.com": {
+        "rusty-budgets.duckdns.org": {
             "host": "rusty-budgets",
             "port": 8666,
             "tls": false
         },
-        "jelly.snakeface.asuscomm.com": {
+        "jelly-tea.duckdns.org": {
             "host": "jellyfin",
             "port": 8096,
             "tls": false
         },
-        "sickgear.snakeface.asuscomm.com": {
+        "sicklygear.duckdns.org": {
             "host": "sickgear",
             "port": 8081,
             "tls": false

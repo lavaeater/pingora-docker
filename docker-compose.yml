@@ -10,14 +10,10 @@ services:
       - ./config.json:/usr/src/pingora/config.json:ro
       - ./certs:/certs:ro
     ports:
-      - "8080:8080"
       - "8443:8443"
     environment:
-      - RUST_LOG=info
-    networks:
-      - proxy-network
+      - RUST_LOG=debug
     restart: unless-stopped
-    
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
@@ -31,8 +27,8 @@ services:
         source: /media/brontosaurus/media
         target: /media
     restart: unless-stopped
-    networks:
-      - proxy-network
+#    networks:
+#      - proxy-network
     
   sickgear:
     container_name: sickgear
@@ -48,8 +44,8 @@ services:
       - /home/tommie/Downloads/deluge/finished/tv:/incoming
       - /media/brontosaurus/media/tv:/tv
     restart: unless-stopped
-    networks:
-      - proxy-network
+#    networks:
+#      - proxy-network
 
   rusty-budgets:
     build:
@@ -59,8 +55,8 @@ services:
     ports:
       - 8666:8666/tcp
     restart: unless-stopped
-    networks:
-      - proxy-network
+#    networks:
+#      - proxy-network
 
     # Example backend services (uncomment and modify as needed)
   # webapp1:
@@ -75,7 +71,7 @@ services:
   #   networks:
   #     - proxy-network
 
-networks:
-  proxy-network:
-    driver: bridge
-    name: proxy-network
+#networks:
+#  proxy-network:
+#    driver: bridge
+#    name: proxy-network

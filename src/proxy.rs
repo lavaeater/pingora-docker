@@ -42,6 +42,9 @@ pub struct ProxyConfig {
     pub tls_listen_addr: Option<String>,
     /// Optional: TLS configuration (required if tls_listen_addr is set)
     pub tls: Option<TlsConfig>,
+    /// Enable debug mode - logs all requests with details (default: false)
+    #[serde(default)]
+    pub debug_mode: bool,
     /// Domain to backend mapping
     /// Key: domain name (e.g., "app1.cleverdomain.asuscomm.com")
     /// Value: backend configuration
@@ -122,14 +125,36 @@ impl ProxyHttp for DomainRouter {
         session: &mut Session,
         _ctx: &mut Self::CTX,
     ) -> Result<Box<HttpPeer>> {
+        let req = session.req_header();
         let host = self.get_host_from_session(session)
             .unwrap_or_else(|| "unknown".to_string());
+        let path = req.uri.path();
+        let method = &req.method;
+        
+        // Always log incoming requests
+        println!("=== INCOMING REQUEST ===");
+        println!("  Host: {}", host);
+        println!("  Method: {}", method);
+        println!("  Path: {}", path);
+        if let Some(client) = session.client_addr() {
+            println!("  Client IP: {}", client);
+        }
+        if self.config.debug_mode {
+            println!("  Headers:");
+            for (name, value) in req.headers.iter() {
+                if let Ok(v) = value.to_str() {
+                    println!("    {}: {}", name, v);
+                }
+            }
+        }
+        println!("========================");
         
         info!("Incoming request for host: {}", host);
         
         let backend = match self.find_backend(&host) {
             Some(b) => b,
             None => {
+                println!(">>> NO BACKEND for host: {} - check your config.json domains", host);
                 return Err(pingora::Error::new_str("No backend configured for host"));
             }
         };

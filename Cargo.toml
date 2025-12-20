@@ -1,5 +1,5 @@
 [package]
-name = "pingora"
+name = "my-pingora-proxy"
 version = "1.0.0"
 authors = ["Aroldo Goulart <Aroldogooulart@gmail.com>", "Bruno Caitano <caitano44@gmail.com>"]
 edition = "2018"
@@ -11,3 +11,19 @@ log = "0.4"
 pingora = { version = "0.6.0", features = ["lb", "proxy"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+instant-acme = { version = "0.8.4", features = ["ring"] }
+reqwest = { version = "0.12", features = ["rustls-tls-native-roots"], default-features = false }
+rustls = { version = "0.23", features = ["ring"], default-features = false }
+clap = { version = "3.2.25", features = ["derive"] }
+tracing = "0.1.44"
+tokio = "1.48.0"
+anyhow = "1.0.100"
+tracing-subscriber = "0.3.22"
+
+[[bin]]
+name = "my-pingora-proxy"
+path = "src/main.rs"
+
+[[bin]]
+name = "provision"
+path = "src/provision.rs"
