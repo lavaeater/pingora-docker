@@ -8,8 +8,10 @@ services:
     container_name: pingora-proxy
     volumes:
       - ./config.json:/usr/src/pingora/config.json:ro
+      - ./certs:/certs:ro
     ports:
       - "8080:8080"
+      - "8443:8443"
     environment:
       - RUST_LOG=info
     networks:

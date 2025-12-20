@@ -19,11 +19,29 @@ pub struct BackendConfig {
     pub sni: Option<String>,
 }
 
+/// TLS configuration for the proxy listener
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct TlsConfig {
+    /// Path to the certificate file (PEM format)
+    pub cert_path: String,
+    /// Path to the private key file (PEM format)
+    pub key_path: String,
+    /// Optional: Enable HTTP/2 (default: true)
+    #[serde(default = "default_true")]
+    pub enable_h2: bool,
+}
+
+fn default_true() -> bool { true }
+
 /// Main proxy configuration
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ProxyConfig {
-    /// Address to listen on (e.g., "0.0.0.0:8080")
+    /// Address to listen on for HTTP (e.g., "0.0.0.0:8080")
     pub listen_addr: String,
+    /// Optional: Address to listen on for HTTPS (e.g., "0.0.0.0:8443")
+    pub tls_listen_addr: Option<String>,
+    /// Optional: TLS configuration (required if tls_listen_addr is set)
+    pub tls: Option<TlsConfig>,
     /// Domain to backend mapping
     /// Key: domain name (e.g., "app1.cleverdomain.asuscomm.com")
     /// Value: backend configuration

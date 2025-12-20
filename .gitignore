@@ -12,3 +12,5 @@ Cargo.lock
 
 # Dependency directories
 /.cargo/
+
+/certs

@@ -1,30 +1,26 @@
 {
     "listen_addr": "0.0.0.0:8080",
+    "tls_listen_addr": "0.0.0.0:8443",
+    "tls": {
+        "cert_path": "/certs/cert.pem",
+        "key_path": "/certs/key.pem",
+        "enable_h2": true
+    },
     "domains": {
-        "app1.cleverdomain.asuscomm.com": {
-            "host": "webapp1",
-            "port": 80,
+        "rusty.cleverdomain.asuscomm.com": {
+            "host": "rusty-budgets",
+            "port": 8666,
             "tls": false
         },
-        "app2.cleverdomain.asuscomm.com": {
-            "host": "webapp2",
-            "port": 80,
+        "jelly.cleverdomain.asuscomm.com": {
+            "host": "jellyfin",
+            "port": 8096,
             "tls": false
         },
-        "api.cleverdomain.asuscomm.com": {
-            "host": "api-service",
-            "port": 80,
-            "tls": false
-        },
-        "*.internal.local": {
-            "host": "internal-gateway",
-            "port": 8080,
+        "sickgear.cleverdomain.asuscomm.com": {
+            "host": "sickgear",
+            "port": 8081,
             "tls": false
         }
-    },
-    "default_backend": {
-        "host": "default-service",
-        "port": 80,
-        "tls": false
     }
 }
