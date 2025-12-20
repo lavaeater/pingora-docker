@@ -17,8 +17,40 @@ services:
     networks:
       - proxy-network
     restart: unless-stopped
-
-  # Example backend services (uncomment and modify as needed)
+    
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    ports:
+      - 8096:8096/tcp
+      - 7359:7359/udp
+    volumes:
+      - /home/tommie/projects/jellyfin/config:/config
+      - /home/tommie/projects/jellyfin/cache:/cache
+      - type: bind
+        source: /media/brontosaurus/media
+        target: /media
+    restart: unless-stopped
+    networks:
+      - proxy-network
+    
+  sickgear:
+    container_name: sickgear
+    image: sickgear/sickgear:latest
+    environment:
+      - APP_UID=1000
+      - APP_GID=1000
+      - TZ=UTC
+    ports:
+      - 8081:8081/tcp
+    volumes:
+      - /home/tommie/projects/jellyfin/data:/data
+      - /home/tommie/Downloads/deluge/finished/tv:/incoming
+      - /media/brontosaurus/media/tv:/tv
+    restart: unless-stopped
+    networks:
+      - proxy-network
+    # Example backend services (uncomment and modify as needed)
   # webapp1:
   #   image: nginx:alpine
   #   container_name: webapp1

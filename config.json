@@ -7,25 +7,20 @@
         "enable_h2": true
     },
     "domains": {
-        "app1.cleverdomain.asuscomm.com": {
-            "host": "webapp1",
-            "port": 3000,
+        "rusty.snakeface.asuscomm.com": {
+            "host": "rusty-budgets",
+            "port": 8666,
             "tls": false
         },
-        "app2.cleverdomain.asuscomm.com": {
-            "host": "webapp2",
-            "port": 8080,
+        "jelly.snakeface.asuscomm.com": {
+            "host": "jellyfin",
+            "port": 8096,
             "tls": false
         },
-        "api.cleverdomain.asuscomm.com": {
+        "sickgear.snakeface.asuscomm.com": {
             "host": "sickgear",
             "port": 8081,
             "tls": false
         }
-    },
-    "default_backend": {
-        "host": "default-service",
-        "port": 80,
-        "tls": false
     }
 }

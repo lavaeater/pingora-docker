@@ -7,17 +7,17 @@
         "enable_h2": true
     },
     "domains": {
-        "rusty.cleverdomain.asuscomm.com": {
+        "rusty.snakeface.asuscomm.com": {
             "host": "rusty-budgets",
             "port": 8666,
             "tls": false
         },
-        "jelly.cleverdomain.asuscomm.com": {
+        "jelly.snakeface.asuscomm.com": {
             "host": "jellyfin",
             "port": 8096,
             "tls": false
         },
-        "sickgear.cleverdomain.asuscomm.com": {
+        "sickgear.snakeface.asuscomm.com": {
             "host": "sickgear",
             "port": 8081,
             "tls": false
