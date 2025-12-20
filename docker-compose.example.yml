@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # The Pingora reverse proxy
+  reverse-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pingora-proxy
+    volumes:
+      - ./config.json:/usr/src/pingora/config.json:ro
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+    networks:
+      - proxy-network
+    restart: unless-stopped
+    depends_on:
+      - webapp1
+      - webapp2
+      - api-service
+
+  # Example: First web application (e.g., a React/Vue app)
+  webapp1:
+    image: nginx:alpine
+    container_name: webapp1
+    volumes:
+      - ./examples/webapp1:/usr/share/nginx/html:ro
+    networks:
+      - proxy-network
+
+  # Example: Second web application (different service)
+  webapp2:
+    image: nginx:alpine
+    container_name: webapp2
+    volumes:
+      - ./examples/webapp2:/usr/share/nginx/html:ro
+    expose:
+      - "80"
+    networks:
+      - proxy-network
+
+  # Example: API service
+  api-service:
+    image: nginx:alpine
+    container_name: api-service
+    volumes:
+      - ./examples/api:/usr/share/nginx/html:ro
+    networks:
+      - proxy-network
+
+  # Default fallback service
+  default-service:
+    image: nginx:alpine
+    container_name: default-service
+    volumes:
+      - ./examples/default:/usr/share/nginx/html:ro
+    networks:
+      - proxy-network
+
+networks:
+  proxy-network:
+    driver: bridge
+    name: proxy-network

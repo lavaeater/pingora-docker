@@ -1,36 +1,34 @@
-mod load_balancer_proxy;
-use crate::load_balancer_proxy::LB;
+mod proxy;
+
+use crate::proxy::{DomainRouter, ProxyConfig};
 use pingora::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::Arc;
-
-
-// Defina uma estrutura para representar suas configurações
-#[derive(Debug, Deserialize, Serialize)]
-struct ServerConfig {
-    address: String,
-    peers: Vec<String>,
-}
 
 fn main() {
-    // Carregue as configurações do servidor de um arquivo JSON
+    env_logger::init();
+
+    // Load configuration from JSON file
     let file = File::open("config.json").expect("Failed to open config file");
     let reader = BufReader::new(file);
-    let server_configs: Vec<ServerConfig> = serde_json::from_reader(reader)
+    let config: ProxyConfig = serde_json::from_reader(reader)
         .expect("Failed to parse config file");
 
-    // Inicie o servidor para cada configuração
-    for config in server_configs {
-        let mut my_server = Server::new(None).unwrap();
-        my_server.bootstrap();
+    let mut my_server = Server::new(None).unwrap();
+    my_server.bootstrap();
 
-        let upstreams = LoadBalancer::try_from_iter(config.peers).unwrap();
-        let mut lb = http_proxy_service(&my_server.configuration, LB(Arc::new(upstreams)));
-        lb.add_tcp(&config.address);
+    // Create the domain router with our configuration
+    let router = DomainRouter::new(config.clone());
+    
+    let mut proxy_service = http_proxy_service(&my_server.configuration, router);
+    proxy_service.add_tcp(&config.listen_addr);
 
-        my_server.add_service(lb);
-        my_server.run_forever();
+    println!("Starting reverse proxy on {}", config.listen_addr);
+    println!("Configured domains:");
+    for (domain, backend) in &config.domains {
+        println!("  {} -> {}:{} (tls: {})", domain, backend.host, backend.port, backend.tls);
     }
+
+    my_server.add_service(proxy_service);
+    my_server.run_forever();
 }

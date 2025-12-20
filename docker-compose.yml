@@ -1,10 +1,35 @@
-version: '3'
+version: '3.8'
+
 services:
-  pingora:
+  reverse-proxy:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: pingora-proxy
     volumes:
-      - .:/app
+      - ./config.json:/usr/src/pingora/config.json:ro
     ports:
-      - "6188:6188"
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+    networks:
+      - proxy-network
+    restart: unless-stopped
+
+  # Example backend services (uncomment and modify as needed)
+  # webapp1:
+  #   image: nginx:alpine
+  #   container_name: webapp1
+  #   networks:
+  #     - proxy-network
+  #
+  # webapp2:
+  #   image: nginx:alpine  
+  #   container_name: webapp2
+  #   networks:
+  #     - proxy-network
+
+networks:
+  proxy-network:
+    driver: bridge
+    name: proxy-network

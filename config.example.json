@@ -3,17 +3,22 @@
     "domains": {
         "app1.cleverdomain.asuscomm.com": {
             "host": "webapp1",
-            "port": 3000,
+            "port": 80,
             "tls": false
         },
         "app2.cleverdomain.asuscomm.com": {
             "host": "webapp2",
-            "port": 8080,
+            "port": 80,
             "tls": false
         },
         "api.cleverdomain.asuscomm.com": {
             "host": "api-service",
-            "port": 5000,
+            "port": 80,
+            "tls": false
+        },
+        "*.internal.local": {
+            "host": "internal-gateway",
+            "port": 8080,
             "tls": false
         }
     },
