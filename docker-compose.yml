@@ -50,6 +50,18 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
+
+  rusty-budgets:
+    build:
+      context: /home/tommie/projects/rusty-budgets
+      dockerfile: Dockerfile
+    container_name: rusty-budgets
+    ports:
+      - 8666:8666/tcp
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
     # Example backend services (uncomment and modify as needed)
   # webapp1:
   #   image: nginx:alpine
