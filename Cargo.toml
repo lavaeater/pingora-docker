@@ -19,6 +19,8 @@ tracing = "0.1.44"
 tokio = "1.48.0"
 anyhow = "1.0.100"
 tracing-subscriber = "0.3.22"
+x509-parser = "0.17"
+rustls-pemfile = "2"
 
 [[bin]]
 name = "my-pingora-proxy"

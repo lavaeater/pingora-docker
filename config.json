@@ -2,23 +2,23 @@
     "listen_addr": "0.0.0.0:80",
     "tls_listen_addr": "0.0.0.0:8443",
     "tls": {
-        "cert_path": "/certs/cert.pem",
-        "key_path": "/certs/key.pem",
+        "cert_path": "/certs/kidvhs.com.pem",
+        "key_path": "/certs/kidvhs.com.key",
         "enable_h2": true
     },
     "debug_mode": true,
     "domains": {
-        "rusty-budgets.duckdns.org": {
+        "rustybudgets.kidvhs.com": {
             "host": "rusty-budgets",
             "port": 8666,
             "tls": false
         },
-        "jelly-tea.duckdns.org": {
+        "jelly.kidvhs.com": {
             "host": "jellyfin",
             "port": 8096,
             "tls": false
         },
-        "sicklygear.duckdns.org": {
+        "sickgear.kidvhs.com": {
             "host": "sickgear",
             "port": 8081,
             "tls": false

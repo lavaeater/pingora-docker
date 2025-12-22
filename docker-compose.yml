@@ -6,7 +6,7 @@ services:
     container_name: pingora
     volumes:
       - ./config.json:/usr/src/pingora/config.json:ro
-      - ./certs:/certs:ro
+      - ./certs:/certs
     ports:
       - "8443:8443"
     environment:

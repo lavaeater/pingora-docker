@@ -29,7 +29,17 @@ pub struct TlsConfig {
     /// Optional: Enable HTTP/2 (default: true)
     #[serde(default = "default_true")]
     pub enable_h2: bool,
+    /// Optional: DuckDNS token for automatic certificate provisioning
+    pub duckdns_token: Option<String>,
+    /// Optional: Use Let's Encrypt production (default: false = staging)
+    #[serde(default)]
+    pub acme_production: bool,
+    /// Optional: Seconds to wait for DNS propagation (default: 30)
+    #[serde(default = "default_dns_wait")]
+    pub dns_wait_seconds: u64,
 }
+
+fn default_dns_wait() -> u64 { 30 }
 
 fn default_true() -> bool { true }
 
