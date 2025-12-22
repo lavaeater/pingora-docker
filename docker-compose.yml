@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
-  reverse-proxy:
+  pingora:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pingora-proxy
+    container_name: pingora
     volumes:
       - ./config.json:/usr/src/pingora/config.json:ro
       - ./certs:/certs:ro
