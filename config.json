@@ -9,7 +9,7 @@
     "debug_mode": true,
     "domains": {
         "rustybudgets.kidvhs.com": {
-            "host": "rusty-budgets",
+            "host": "172.24.0.1",
             "port": 8666,
             "tls": false
         },

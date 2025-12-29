@@ -12,6 +12,9 @@ services:
     environment:
       - RUST_LOG=debug
     restart: unless-stopped
+    networks:
+      - proxy-network
+
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
@@ -25,8 +28,8 @@ services:
         source: /media/brontosaurus/media
         target: /media
     restart: unless-stopped
-#    networks:
-#      - proxy-network
+    networks:
+      - proxy-network
     
   sickgear:
     container_name: sickgear
@@ -42,19 +45,23 @@ services:
       - /home/tommie/Downloads/deluge/finished/tv:/incoming
       - /media/brontosaurus/media/tv:/tv
     restart: unless-stopped
-#    networks:
-#      - proxy-network
+    networks:
+      - proxy-network
 
   rusty-budgets:
     build:
       context: /home/tommie/projects/rusty-budgets
       dockerfile: Dockerfile
     container_name: rusty-budgets
+    environment:
+      - DATA_FILE=/data.json
     ports:
       - 8666:8666/tcp
+    volumes:
+      - /home/tommie/projects/rusty-budgets/data.json:/data.json
     restart: unless-stopped
-#    networks:
-#      - proxy-network
+    networks:
+      - proxy-network
 
     # Example backend services (uncomment and modify as needed)
   # webapp1:
@@ -69,7 +76,10 @@ services:
   #   networks:
   #     - proxy-network
 
-#networks:
-#  proxy-network:
-#    driver: bridge
-#    name: proxy-network
+networks:
+  proxy-network:
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+    driver: bridge
+    name: proxy-network
