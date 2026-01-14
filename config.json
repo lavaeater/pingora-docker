@@ -18,6 +18,11 @@
             "port": 8096,
             "tls": false
         },
+        "books.kidvhs.com": {
+            "host": "oxidize-books",
+            "port": 8888,
+            "tls": false
+        },
         "sickgear.kidvhs.com": {
             "host": "sickgear",
             "port": 8081,
