@@ -72,11 +72,13 @@ services:
       DATABASE_URL: postgresql://postgres:birkobengo@postgres/oxidized_books
       OXIDIZED_BOOKS_INPUT_PATH: /books_input
       OXIDIZED_BOOKS_BOOK_PATH: /books
+      OXIDIZED_TEMP_PATH: /book_temp
     ports:
       - 8888:8888/tcp
     volumes:
       - /home/tommie/Downloads/deluge/finished/books/:/books_input
       - /media/brontosaurus/media/books/:/books
+      - /home/tommie/Downloads/book_temp/:/book_temp
     restart: unless-stopped
     networks:
       - proxy-network
