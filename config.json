@@ -14,7 +14,7 @@
             "tls": false
         },
         "rustybudgets.kidvhs.com": {
-            "host": "172.24.0.1",
+            "host": "rusty-budgets",
             "port": 8666,
             "tls": false
         },
