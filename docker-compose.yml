@@ -22,7 +22,7 @@ services:
 
   pingora:
     build:
-      context: .
+      context: ./repos/pingora-docker
       dockerfile: Dockerfile
     container_name: pingora
     volumes:

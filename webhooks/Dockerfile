@@ -1,5 +1,7 @@
 FROM almir/webhook
 
+USER root
+
 # Install dependencies needed for rebuild script
 RUN apk add --no-cache \
     git \
@@ -10,3 +12,5 @@ RUN apk add --no-cache \
 
 # Make rebuild script executable
 RUN chmod +x /scripts/rebuild.sh 2>/dev/null || true
+
+USER webhook
