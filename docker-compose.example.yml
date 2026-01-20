@@ -29,7 +29,7 @@ services:
       - ./examples/webapp1:/usr/share/nginx/html:ro
     networks:
       - proxy-network
-
+#silly thing for main
   # Example: Second web application (different service)
   webapp2:
     image: nginx:alpine
