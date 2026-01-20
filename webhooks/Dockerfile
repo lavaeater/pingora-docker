@@ -8,9 +8,14 @@ RUN apk add --no-cache \
     jq \
     docker-cli \
     docker-cli-compose \
-    bash
+    bash \
+    openssh-client
 
 # Make rebuild script executable
 RUN chmod +x /scripts/rebuild.sh 2>/dev/null || true
 
-USER webhook
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

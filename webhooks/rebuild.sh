@@ -57,6 +57,8 @@ fi
 
 # Rebuild and restart the container
 echo "Rebuilding container: $SERVICE_NAME"
-docker compose -f "$COMPOSE_FILE" up --no-deps --build "$SERVICE_NAME" -d
+#docker compose -f "$COMPOSE_FILE" stop "$SERVICE_NAME" || true
+#docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE_NAME" || true
+docker compose -f "$COMPOSE_FILE" up --no-deps --build -d "$SERVICE_NAME"
 
 echo "=== Rebuild complete for $SERVICE_NAME ==="

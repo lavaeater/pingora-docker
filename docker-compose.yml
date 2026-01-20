@@ -4,7 +4,7 @@ services:
       context: ./webhooks
       dockerfile: Dockerfile
     container_name: webhook
-    command: -verbose -hooks=/config/hooks.json -hotreload
+    command: -verbose -hooks=/config/hooks.json -hotreload -template
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
@@ -12,8 +12,11 @@ services:
       - ./webhooks/services.json:/config/services.json:ro
       - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
       - ./repos:/repos
+      - ./repos:/compose/repos
       - ./docker-compose.yml:/compose/docker-compose.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh/id_ed25519:/ssh-keys/id_ed25519:ro
+      - ~/.ssh/known_hosts:/ssh-keys/known_hosts:ro
     ports:
       - "9000:9000"
     restart: unless-stopped

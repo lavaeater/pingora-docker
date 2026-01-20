@@ -1,17 +1,17 @@
 {
   "rusty-budgets": {
     "repo": "lavaeater/rusty-budgets",
-    "url": "https://github.com/lavaeater/rusty-budgets.git",
+    "url": "git@github.com:lavaeater/rusty-budgets.git",
     "branch": "main"
   },
   "oxidize-books": {
     "repo": "lavaeater/oxidize-books",
-    "url": "https://github.com/lavaeater/oxidize-books.git",
+    "url": "git@github.com:lavaeater/oxidize-books.git",
     "branch": "main"
   },
   "pingora": {
     "repo": "lavaeater/pingora-docker",
-    "url": "https://github.com/lavaeater/pingora-docker.git",
+    "url": "git@github.com:lavaeater/pingora-docker.git",
     "branch": "main"
   }
 }

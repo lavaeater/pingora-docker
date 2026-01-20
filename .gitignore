@@ -16,3 +16,4 @@ Cargo.lock
 /certs
 .env
 /repos
+/webhooks/hooks.json

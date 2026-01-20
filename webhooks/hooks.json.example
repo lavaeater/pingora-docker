@@ -18,10 +18,10 @@
         {
           "match": {
             "type": "payload-hmac-sha256",
-            "secret": "{{ getenv \"WEBHOOK_SECRET\" }}",
+            "secret": "YOUR_WEBHOOK_SECRET_HERE",
             "parameter": {
               "source": "header",
-              "name": "X-Hub-Signature-256"
+              "name": "x-hub-signature-256"
             }
           }
         }
