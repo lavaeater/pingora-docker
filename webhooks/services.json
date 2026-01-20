@@ -1,0 +1,12 @@
+{
+  "rusty-budgets": {
+    "repo": "yourusername/rusty-budgets",
+    "url": "https://github.com/yourusername/rusty-budgets.git",
+    "branch": "main"
+  },
+  "oxidize-books": {
+    "repo": "yourusername/oxidize_books",
+    "url": "https://github.com/yourusername/oxidize_books.git",
+    "branch": "main"
+  }
+}

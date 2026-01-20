@@ -1,0 +1,31 @@
+[
+  {
+    "id": "rebuild-service",
+    "execute-command": "/scripts/rebuild.sh",
+    "command-working-directory": "/repos",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "repository.full_name"
+      },
+      {
+        "source": "payload",
+        "name": "ref"
+      }
+    ],
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "{{ getenv \"WEBHOOK_SECRET\" }}",
+            "parameter": {
+              "source": "header",
+              "name": "X-Hub-Signature-256"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

@@ -1,4 +1,25 @@
 services:
+  webhook:
+    build:
+      context: ./webhooks
+      dockerfile: Dockerfile
+    container_name: webhook
+    command: -verbose -hooks=/config/hooks.json -hotreload
+    environment:
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+    volumes:
+      - ./webhooks/hooks.json:/config/hooks.json:ro
+      - ./webhooks/services.json:/config/services.json:ro
+      - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
+      - ./repos:/repos
+      - ./docker-compose.yml:/compose/docker-compose.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
   pingora:
     build:
       context: .
@@ -50,7 +71,7 @@ services:
 
   rusty-budgets:
     build:
-      context: /home/tommie/projects/rusty-budgets
+      context: ./repos/rusty-budgets
       dockerfile: Dockerfile
     container_name: rusty-budgets
     environment:
@@ -65,7 +86,7 @@ services:
       
   oxidize-books:
     build:
-      context: /home/tommie/projects/oxidize_books
+      context: ./repos/oxidize-books
       dockerfile: Dockerfile
     container_name: oxidize-books
     environment:

@@ -191,6 +191,60 @@ networks:
     external: true  # if already exists
 ```
 
+## GitHub Webhook Auto-Rebuild
+
+The project includes a webhook service that automatically rebuilds containers when you push to GitHub.
+
+### Setup
+
+1. **Create `.env` file** with your webhook secret:
+   ```bash
+   cp .env.example .env
+   # Generate a secret
+   openssl rand -hex 32
+   # Edit .env and set WEBHOOK_SECRET
+   ```
+
+2. **Configure services** in `webhooks/services.json`:
+   ```json
+   {
+     "rusty-budgets": {
+       "repo": "yourusername/rusty-budgets",
+       "url": "https://github.com/yourusername/rusty-budgets.git",
+       "branch": "main"
+     }
+   }
+   ```
+
+3. **Set up GitHub webhook** for each repository:
+   - Go to your repo → Settings → Webhooks → Add webhook
+   - **Payload URL**: `https://webhook.kidvhs.com/hooks/rebuild-service`
+   - **Content type**: `application/json`
+   - **Secret**: Same value as `WEBHOOK_SECRET` in your `.env`
+   - **Events**: Select "Just the push event"
+
+4. **Initial clone** (first time only):
+   ```bash
+   cd repos
+   git clone https://github.com/yourusername/rusty-budgets.git
+   git clone https://github.com/yourusername/oxidize_books.git oxidize-books
+   ```
+
+### How it works
+
+1. GitHub sends a POST to `https://webhook.kidvhs.com/hooks/rebuild-service`
+2. The webhook service validates the signature using your secret
+3. It matches the repo/branch against `services.json`
+4. Pulls latest code into `./repos/<service-name>/`
+5. Runs `docker compose up --no-deps --build <service> -d`
+
+### Adding a new service
+
+1. Add entry to `webhooks/services.json`
+2. Add service definition to `docker-compose.yml` with `context: ./repos/<name>`
+3. Set up GitHub webhook on the repository
+4. Clone the repo initially: `git clone <url> repos/<name>`
+
 ## License
 
 Apache License, Version 2.0
