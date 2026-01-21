@@ -17,3 +17,4 @@ Cargo.lock
 .env
 /repos
 /webhooks/hooks.json
+/deluge-config
