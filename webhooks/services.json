@@ -6,9 +6,5 @@
   "oxidize-books": {
     "repo": "lavaeater/oxidize-books",
     "url": "git@github.com:lavaeater/oxidize-books.git"
-  },
-  "pingora": {
-    "repo": "lavaeater/pingora-docker",
-    "url": "git@github.com:lavaeater/pingora-docker.git"
   }
 }

@@ -7,10 +7,13 @@ services:
     command: -verbose -hooks=/config/hooks.json -hotreload -template
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - INIT_SERVICES=${INIT_SERVICES:-false}
+      - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro
       - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
+      - ./webhooks/init-services.sh:/scripts/init-services.sh:ro
       - ./repos:/repos
       - ./repos:/compose/repos
       - ./docker-compose.yml:/compose/docker-compose.yml:ro
@@ -25,7 +28,7 @@ services:
 
   pingora:
     build:
-      context: ./repos/pingora-docker
+      context: .
       dockerfile: Dockerfile
     container_name: pingora
     volumes:
