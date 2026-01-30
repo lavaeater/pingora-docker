@@ -10,11 +10,96 @@ This guide explains how to set up Docker Swarm for the pingora-docker project ac
 | Old Laptop | `laptop` | oxidize-books, rusty-budgets, postgres |
 | Workstation | `workstation` | jellyfin, sickgear, deluge |
 
+## SSH Setup for Remote Management
+
+Configure SSH on all machines so you can manage everything from one keyboard.
+
+### On Each Remote Machine (Raspberry Pi, Laptop, Workstation)
+
+Install and enable SSH server:
+```bash
+# Arch Linux
+sudo pacman -S openssh
+sudo systemctl enable sshd
+sudo systemctl start sshd
+```
+
+### On Your Main Machine (where you'll work from)
+
+#### 1. Generate SSH Key (if you don't have one)
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+#### 2. Copy Your Key to Each Machine
+```bash
+ssh-copy-id tommie@rpi
+ssh-copy-id tommie@laptop
+ssh-copy-id tommie@workstation
+```
+
+Replace hostnames with IP addresses if DNS isn't configured.
+
+#### 3. Configure SSH Aliases
+
+Edit `~/.ssh/config`:
+```
+Host rpi
+    HostName 192.168.1.10
+    User tommie
+
+Host laptop
+    HostName 192.168.1.11
+    User tommie
+
+Host workstation
+    HostName 192.168.1.12
+    User tommie
+```
+
+Now you can simply run:
+```bash
+ssh rpi
+ssh laptop
+ssh workstation
+```
+
+#### 4. Optional: Disable Password Authentication (More Secure)
+
+On each remote machine, edit `/etc/ssh/sshd_config`:
+```
+PasswordAuthentication no
+PubkeyAuthentication yes
+```
+
+Then restart SSH:
+```bash
+sudo systemctl restart sshd
+```
+
+### Quick Commands from Your Main Machine
+
+```bash
+# Run a command on all nodes
+for host in rpi laptop workstation; do
+    echo "=== $host ===" && ssh $host "docker node ls" 
+done
+
+# Open multiple terminals (if using tmux)
+tmux new-session -s swarm \; \
+    send-keys "ssh rpi" C-m \; \
+    split-window -h \; \
+    send-keys "ssh laptop" C-m \; \
+    split-window -v \; \
+    send-keys "ssh workstation" C-m
+```
+
 ## Prerequisites
 
 - Docker installed on all nodes
+- SSH access to all nodes (see above)
 - Network connectivity between all nodes (same network or VPN)
-- Open ports: 2377/tcp (cluster management), 7946/tcp+udp (node communication), 4789/udp (overlay network)
+- Open ports: 2377/tcp (cluster management), 7946/tcp+udp (node communication), 4789/udp (overlay network), 22/tcp (SSH)
 
 ## Step 1: Initialize the Swarm (on Raspberry Pi)
 
@@ -223,3 +308,70 @@ docker network inspect pingora_proxy-network
 ```
 
 All services can communicate via service names (e.g., `postgres`, `pingora`) through the overlay network.
+
+## File Synchronization with Syncthing
+
+To sync downloaded books from the workstation to the laptop (where oxidize-books processes them), use Syncthing.
+
+### Install on Both Machines (Arch Linux)
+
+```bash
+sudo pacman -S syncthing
+```
+
+### Enable and Start the Service
+
+Run as your user (not root):
+```bash
+systemctl --user enable syncthing
+systemctl --user start syncthing
+```
+
+### Make It Survive Reboots
+
+```bash
+loginctl enable-linger $USER
+```
+
+This keeps user services running even when you're not logged in.
+
+### Access the Web UI
+
+Open `http://localhost:8384` in your browser on each machine.
+
+### Configure the Sync
+
+1. **On workstation:** Actions → Show ID, copy the Device ID
+2. **On laptop:** Add Remote Device → paste workstation's Device ID
+3. **On workstation:** Accept the laptop's connection request (or add laptop's ID manually)
+4. **On workstation:** Add Folder → select `/home/tommie/Downloads/deluge/finished/books`
+   - Set Folder Type to **"Send Only"**
+   - In Sharing tab, check the laptop device
+5. **On laptop:** Accept the folder share
+   - Set local path to `/home/tommie/books_incoming` (or wherever oxidize-books expects input)
+   - Set Folder Type to **"Receive Only"**
+
+### Verify It's Running
+
+```bash
+systemctl --user status syncthing
+```
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Syncthing                                │
+├────────────────────────────┬────────────────────────────────────┤
+│        Workstation         │            Laptop                  │
+│    (Send Only)             │        (Receive Only)              │
+├────────────────────────────┼────────────────────────────────────┤
+│ ~/Downloads/.../books/     │ ~/books_incoming/                  │
+│         ↓                  │         ↓                          │
+│   [new book.epub]    ───────────→  [new book.epub]              │
+│                            │         ↓                          │
+│                            │   oxidize-books processes it       │
+└────────────────────────────┴────────────────────────────────────┘
+```
+
+Files dropped in the books folder on workstation automatically sync to the laptop over LAN.
