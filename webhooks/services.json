@@ -1,10 +1,14 @@
 {
   "rusty-budgets": {
     "repo": "lavaeater/rusty-budgets",
-    "url": "git@github.com:lavaeater/rusty-budgets.git"
+    "url": "git@github.com:lavaeater/rusty-budgets.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
   },
   "oxidize-books": {
     "repo": "lavaeater/oxidize-books",
-    "url": "git@github.com:lavaeater/oxidize-books.git"
+    "url": "git@github.com:lavaeater/oxidize-books.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
   }
 }

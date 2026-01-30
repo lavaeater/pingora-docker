@@ -1,0 +1,31 @@
+[
+  {
+    "id": "rebuild-service",
+    "execute-command": "/scripts/swarm-rebuild.sh",
+    "command-working-directory": "/repos",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "repository.full_name"
+      },
+      {
+        "source": "payload",
+        "name": "ref"
+      }
+    ],
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "YOUR_WEBHOOK_SECRET_HERE",
+            "parameter": {
+              "source": "header",
+              "name": "x-hub-signature-256"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

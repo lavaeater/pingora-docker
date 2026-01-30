@@ -24,14 +24,16 @@ services:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - INIT_SERVICES=${INIT_SERVICES:-false}
       - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
+      - REGISTRY=${REGISTRY:-localhost:5000}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro
       - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
+      - ./webhooks/swarm-rebuild.sh:/scripts/swarm-rebuild.sh:ro
       - ./webhooks/init-services.sh:/scripts/init-services.sh:ro
       - ./repos:/repos
       - ./repos:/compose/repos
-      - ./docker-compose.yml:/compose/docker-compose.yml:ro
+      - ./docker-stack.yml:/compose/docker-stack.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.ssh/id_ed25519:/ssh-keys/id_ed25519:ro
       - ~/.ssh/known_hosts:/ssh-keys/known_hosts:ro

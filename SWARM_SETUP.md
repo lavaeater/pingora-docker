@@ -83,7 +83,23 @@ For production, generate TLS certificates and configure the registry with HTTPS.
 
 ## Step 5: Build and Push Custom Images
 
-From the project directory on a machine with the source code:
+### Automated (via Webhooks)
+
+The webhook service automatically builds and pushes images when you push a tag to GitHub. It uses `swarm-rebuild.sh` which:
+1. Clones/pulls the repository
+2. Builds the Docker image
+3. Pushes to the private registry
+4. Updates the Swarm service
+
+**Setup:** Use `hooks-swarm.json.example` as your `hooks.json` template:
+```bash
+cp webhooks/hooks-swarm.json.example webhooks/hooks.json
+# Edit hooks.json and replace YOUR_WEBHOOK_SECRET_HERE with your secret
+```
+
+### Manual (Initial Bootstrap)
+
+For the initial deployment, build and push images manually:
 
 ```bash
 # Set your registry (use the Pi's IP so other nodes can pull)
@@ -121,7 +137,9 @@ Copy the config files:
 ./webhooks/hooks.json
 ./webhooks/services.json
 ./webhooks/rebuild.sh
+./webhooks/swarm-rebuild.sh
 ./webhooks/init-services.sh
+./docker-stack.yml
 ```
 
 ## Step 7: Deploy the Stack
