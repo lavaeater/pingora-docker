@@ -1,0 +1,212 @@
+version: "3.8"
+
+services:
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  webhook:
+    image: ${REGISTRY:-localhost:5000}/webhook:latest
+    command: -verbose -hooks=/config/hooks.json -hotreload -template
+    environment:
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - INIT_SERVICES=${INIT_SERVICES:-false}
+      - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
+    volumes:
+      - ./webhooks/hooks.json:/config/hooks.json:ro
+      - ./webhooks/services.json:/config/services.json:ro
+      - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
+      - ./webhooks/init-services.sh:/scripts/init-services.sh:ro
+      - ./repos:/repos
+      - ./repos:/compose/repos
+      - ./docker-compose.yml:/compose/docker-compose.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh/id_ed25519:/ssh-keys/id_ed25519:ro
+      - ~/.ssh/known_hosts:/ssh-keys/known_hosts:ro
+    ports:
+      - "9000:9000"
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  pingora:
+    image: ${REGISTRY:-localhost:5000}/pingora:latest
+    volumes:
+      - ./config.json:/usr/src/pingora/config.json:ro
+      - ./certs:/certs
+    ports:
+      - "8443:8443"
+    environment:
+      - RUST_LOG=debug
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    ports:
+      - "8096:8096/tcp"
+      - "7359:7359/udp"
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - /media/brontosaurus/media:/media
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == workstation
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  sickgear:
+    image: sickgear/sickgear:latest
+    environment:
+      - APP_UID=1000
+      - APP_GID=1000
+      - TZ=UTC
+    ports:
+      - "8081:8081/tcp"
+    volumes:
+      - sickgear-data:/data
+      - /home/tommie/Downloads/deluge/finished/tv:/incoming
+      - /media/brontosaurus/media/tv:/tv
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == workstation
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  rusty-budgets:
+    image: ${REGISTRY:-localhost:5000}/rusty-budgets:latest
+    environment:
+      - DATA_FILE=/data.json
+    ports:
+      - "8666:8666/tcp"
+    volumes:
+      - rusty-budgets-data:/data
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == laptop
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  oxidize-books:
+    image: ${REGISTRY:-localhost:5000}/oxidize-books:latest
+    environment:
+      DATABASE_URL: postgresql://postgres:birkobengo@postgres/oxidized_books
+      OXIDIZED_BOOKS_INPUT_PATH: /books_input
+      OXIDIZED_BOOKS_BOOK_PATH: /books
+      OXIDIZED_TEMP_PATH: /book_temp
+    ports:
+      - "8888:8888/tcp"
+    volumes:
+      - books-input:/books_input
+      - books-storage:/books
+      - books-temp:/book_temp
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == laptop
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  postgres:
+    image: "postgres:latest"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: birkobengo
+      POSTGRES_DB: oxidized_books
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == laptop
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+      - DELUGE_LOGLEVEL=error
+    volumes:
+      - deluge-config:/config
+      - /home/tommie/Downloads/deluge:/home/tommie/Downloads/deluge
+      - /media/brontosaurus/media:/media/brontosaurus/media
+    ports:
+      - "8112:8112"
+      - "6881:6881"
+      - "6881:6881/udp"
+      - "58846:58846"
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == workstation
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+networks:
+  proxy-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  registry-data:
+  jellyfin-config:
+  jellyfin-cache:
+  sickgear-data:
+  rusty-budgets-data:
+  postgres-data:
+  deluge-config:
+  books-input:
+  books-storage:
+  books-temp:
