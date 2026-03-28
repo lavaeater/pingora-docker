@@ -9,7 +9,8 @@ RUN apk add --no-cache \
     docker-cli \
     docker-cli-compose \
     bash \
-    openssh-client
+    openssh-client \
+    msmtp
 
 # Make rebuild script executable
 RUN chmod +x /scripts/rebuild.sh 2>/dev/null || true

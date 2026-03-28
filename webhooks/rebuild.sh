@@ -1,11 +1,38 @@
 #!/bin/bash
-set -e
 
 REPO_FULL_NAME="$1"
 REF="$2"
 REPOS_DIR="/repos"
 COMPOSE_FILE="/compose/docker-compose.yml"
 PROJECT_NAME="pingora-docker"
+
+send_notification() {
+    local subject="$1"
+    local body="$2"
+
+    if [ -z "$NOTIFY_EMAIL" ] || [ ! -f /etc/msmtprc ]; then
+        return 0
+    fi
+
+    printf "To: %s\nFrom: %s\nSubject: %s\n\n%s" \
+        "$NOTIFY_EMAIL" "$SMTP_FROM" "$subject" "$body" \
+        | msmtp "$NOTIFY_EMAIL" 2>/dev/null || echo "WARNING: Failed to send email notification"
+}
+
+# Trap errors so we can notify on failure
+on_error() {
+    local exit_code=$?
+    send_notification \
+        "[FAIL] Rebuild failed: ${SERVICE_NAME:-unknown}" \
+        "Service: ${SERVICE_NAME:-unknown}
+Repository: $REPO_FULL_NAME
+Tag: ${TAG:-unknown}
+Exit code: $exit_code
+Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+    exit $exit_code
+}
+trap on_error ERR
+set -e
 
 # Only process tag refs (refs/tags/v0.1.0 -> v0.1.0)
 if [[ ! "$REF" =~ ^refs/tags/ ]]; then
@@ -68,5 +95,13 @@ echo "Rebuilding container: $SERVICE_NAME"
 #docker compose -f "$COMPOSE_FILE" stop "$SERVICE_NAME" || true
 #docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE_NAME" || true
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$SERVICE_NAME"
+
+send_notification \
+    "[OK] Rebuild complete: $SERVICE_NAME" \
+    "Service: $SERVICE_NAME
+Repository: $REPO_FULL_NAME
+Tag: $TAG
+Status: Running
+Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
 echo "=== Rebuild complete for $SERVICE_NAME ==="
