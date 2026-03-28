@@ -9,6 +9,13 @@ services:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - INIT_SERVICES=${INIT_SERVICES:-false}
       - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-on}
+      - NOTIFY_EMAIL=${NOTIFY_EMAIL:-}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro
@@ -96,10 +103,13 @@ services:
       dockerfile: Dockerfile
     container_name: oxidize-books
     environment:
-      DATABASE_URL: postgresql://postgres:birkobengo@postgres/oxidized_books
-      OXIDIZED_BOOKS_INPUT_PATH: /books_input
-      OXIDIZED_BOOKS_BOOK_PATH: /books
-      OXIDIZED_TEMP_PATH: /book_temp
+      - DATABASE_URL=postgresql://postgres:birkobengo@postgres/oxidized_books
+      - OXIDIZED_BOOKS_INPUT_PATH=/books_input
+      - OXIDIZED_BOOKS_BOOK_PATH=/books
+      - OXIDIZED_TEMP_PATH=/book_temp
+      - DEFAULT_USER_EMAIL=${DEFAULT_USER_EMAIL}
+      - DEFAULT_USER_USERNAME=${DEFAULT_USER_USERNAME}
+      - DEFAULT_USER_PASSWORD=${DEFAULT_USER_PASSWORD}
     ports:
       - 8888:8888/tcp
     volumes:
