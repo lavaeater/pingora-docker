@@ -32,6 +32,11 @@
             "host": "sickgear",
             "port": 8081,
             "tls": false
+        },
+        "browsidian.kidvhs.com": {
+            "host": "browsidian",
+            "port": 5173,
+            "tls": false
         }
     }
 }
