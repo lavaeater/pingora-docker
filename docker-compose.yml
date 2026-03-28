@@ -42,7 +42,7 @@ services:
       - ./config.json:/usr/src/pingora/config.json:ro
       - ./certs:/certs
     ports:
-      - "443:8443"
+      - "8443:8443"
     environment:
       - RUST_LOG=debug
     restart: unless-stopped
