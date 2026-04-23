@@ -143,13 +143,10 @@ services:
     command:
       - start
       - --listen-addr=0.0.0.0:3000
-      - --jwt-priv-key-path=/etc/spacetimedb/id_ecdsa
-      - --jwt-pub-key-path=/etc/spacetimedb/id_ecdsa.pub
     ports:
       - 3000:3000
     volumes:
       - /home/tommie/projects/spacetimedb/data:/home/spacetime/.local/share/spacetime/data
-      - /home/tommie/projects/spacetimedb/keys:/etc/spacetimedb:ro
     restart: unless-stopped
     networks:
       - proxy-network
