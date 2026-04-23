@@ -1,5 +1,7 @@
 # Pingora Domain-Based Reverse Proxy
 
+/home/tommie/.local/share/nvm/v18.20.7/bin /home/tommie/.local/share/nvm/v24.13.0/bin/node /home/tommie/Android/Sdk/platform-tools /home/tommie/Android/Sdk/emulator /home/tommie/.local/bin /home/tommie/.sdkman/candidates/java/current/bin /home/tommie/.cargo/bin /usr/local/bin /usr/bin /bin /usr/local/sbin /usr/lib/jvm/default/bin /usr/bin/site_perl /usr/bin/vendor_perl /usr/bin/core_perl /usr/lib/rustup/bin /home/tommie/.local/share/JetBrains/Toolbox/scripts
+
 A high-performance reverse proxy built on [Cloudflare's Pingora](https://github.com/cloudflare/pingora) that routes traffic to different Docker containers based on the incoming domain name.
 
 ## Features

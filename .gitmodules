@@ -1,0 +1,3 @@
+[submodule "browsidian"]
+	path = browsidian
+	url = git@github.com:lavaeater/browsidian.git

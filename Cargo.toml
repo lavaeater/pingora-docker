@@ -1,25 +1,25 @@
 [package]
 name = "my-pingora-proxy"
 version = "1.0.0"
-authors = ["Aroldo Goulart <Aroldogooulart@gmail.com>", "Bruno Caitano <caitano44@gmail.com>"]
-edition = "2018"
+authors = ["Tommie Nygren <tommie.nygren@gmail.com>"]
+edition = "2024"
 
 [dependencies]
 async-trait = "0.1"
 env_logger = "0.11"
 log = "0.4"
-pingora = { version = "0.6.0", features = ["lb", "proxy", "rustls"] }
+pingora = { version = "0.8.0", features = ["lb", "proxy", "rustls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 instant-acme = { version = "0.8.4", features = ["ring"] }
-reqwest = { version = "0.12", features = ["rustls-tls-native-roots"], default-features = false }
+reqwest = { version = "0.13.2", features = ["rustls"], default-features = false }
 rustls = { version = "0.23", features = ["ring"], default-features = false }
-clap = { version = "3.2.25", features = ["derive"] }
+clap = { version = "4.6.0", features = ["derive"] }
 tracing = "0.1.44"
 tokio = "1.48.0"
 anyhow = "1.0.100"
 tracing-subscriber = "0.3.22"
-x509-parser = "0.17"
+x509-parser = "0.18.1"
 rustls-pemfile = "2"
 
 [[bin]]
