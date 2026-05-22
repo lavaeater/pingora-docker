@@ -28,6 +28,9 @@ EOF
     echo "msmtp configured for $SMTP_HOST"
 fi
 
+# Trust all repos dirs regardless of owner (container runs as root, repos may be owned by host user)
+git config --global --add safe.directory '*'
+
 # Run init script on startup if INIT_SERVICES is set
 if [ "$INIT_SERVICES" = "true" ]; then
     echo "=== Running service initialization ==="
