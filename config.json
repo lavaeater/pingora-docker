@@ -29,7 +29,7 @@
             "tls": false
         },
         "sickgear.kidvhs.com": {
-            "host": "sickgear",
+            "host": "medusa",
             "port": 8081,
             "tls": false
         },
