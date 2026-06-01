@@ -7,7 +7,7 @@ services:
     command: -verbose -hooks=/config/hooks.json -hotreload -template
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      - INIT_SERVICES=${INIT_SERVICES:-false}
+      - INIT_SERVICES=${INIT_SERVICES:-true}
       - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -68,39 +68,6 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
-    
-#  sickgear:
-#    container_name: sickgear
-#    image: sickgear/sickgear:latest
-#    environment:
-#      - APP_UID=1000
-#      - APP_GID=1000
-#      - TZ=UTC
-#    ports:
-#      - 8081:8081/tcp
-#    volumes:
-#      - /home/tommie/projects/jellyfin/data:/data
-#      - /home/tommie/Downloads/deluge/finished/tv:/incoming
-#      - /media/brontosaurus/media/tv:/tv
-#    restart: unless-stopped
-#    networks:
-#      - proxy-network
-
-#  sonarr:
-#    image: lscr.io/linuxserver/sonarr:latest
-#    container_name: sonarr
-#    environment:
-#      - PUID=1000
-#      - PGID=1000
-#      - TZ=Etc/UTC
-#    volumes:
-#      - /home/tommie/projects/sonarr/data:/config
-#      - /media/brontosaurus/media:/media 
-#    ports:
-#      - 8989:8989
-#    restart: unless-stopped
-#    networks:
-#      - proxy-network
 
   medusa:
     image: lscr.io/linuxserver/medusa:latest
@@ -143,6 +110,9 @@ services:
     container_name: oxidian
     ports:
       - 5173:5173/tcp
+    restart: unless-stopped
+    networks:
+      - proxy-network
       
   oxidize-books:
     build:
