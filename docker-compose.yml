@@ -135,6 +135,14 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
+  
+  oxidian:
+    build:
+      context: ./repos/oxidian
+      dockerfile: Dockerfile
+    container_name: oxidian
+    ports:
+      - 5173:5173/tcp
       
   oxidize-books:
     build:
