@@ -7,15 +7,12 @@
   },
   "oxidize-books": {
     "repo": "lavaeater/oxidize-books",
-    "url": "git@github.com:lavaeater/oxidize-books.git",
-    "build_context": ".",
-    "dockerfile": "Dockerfile"
+    "url": "git@github.com:lavaeater/oxidize-books.git"
   },
-  "oxidian": {
-    "repo": "lavaeater/oxidian",
-    "url": "git@github.com:lavaeater/oxidian.git",
-    "build_context": ".",
-    "dockerfile": "Dockerfile"
+  "civilization": {
+    "repo": "lavaeater/civilization",
+    "url": "git@github.com:lavaeater/civilization.git",
+    "compose_services": ["civilization-server", "civilization-web"]
   },
   "craboot": {
     "repo": "lavaeater/craboot",

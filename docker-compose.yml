@@ -87,6 +87,36 @@ services:
     networks:
       - proxy-network
 
+  civilization-server:
+    build:
+      context: ./repos/civilization
+      dockerfile: Dockerfile
+      target: server
+    container_name: civilization-server
+    environment:
+      - SEATS=${CIV_SEATS:-0}
+      - NUM_PLAYERS=${CIV_NUM_PLAYERS:-5}
+      - NETCODE_KEY=${CIV_NETCODE_KEY:-random}
+      - PUBLIC_ADDR=civ.kidvhs.com:443
+      - PUBLIC_WS=wss://civ.kidvhs.com/ws
+    volumes:
+      - /home/tommie/projects/civilization-saves:/app/saves
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
+  civilization-web:
+    build:
+      context: ./repos/civilization
+      dockerfile: Dockerfile
+      target: web
+    container_name: civilization-web
+    depends_on:
+      - civilization-server
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
   rusty-budgets:
     build:
       context: ./repos/rusty-budgets

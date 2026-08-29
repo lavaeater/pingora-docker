@@ -90,15 +90,28 @@ else
     git checkout "$TAG"
 fi
 
-# Rebuild and restart the container
-echo "Rebuilding container: $SERVICE_NAME"
-#docker compose -f "$COMPOSE_FILE" stop "$SERVICE_NAME" || true
-#docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE_NAME" || true
-docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$SERVICE_NAME"
+# Submodules (e.g. civilization's lava_ui_builder): a plain clone/checkout
+# leaves these as empty directories, which breaks any build that needs them.
+# Harmless no-op for repos without submodules.
+git submodule update --init --recursive
+
+# A repo may map to more than one compose service (e.g. civilization ->
+# civilization-server + civilization-web, both built from the same checkout).
+# Falls back to [SERVICE_NAME] for repos that only ever mapped 1:1.
+mapfile -t COMPOSE_SERVICES < <(jq -r --arg service "$SERVICE_NAME" '
+    .[$service].compose_services // [$service] | .[]
+' "$CONFIG_FILE")
+
+# Rebuild and restart each compose service from this checkout.
+for COMPOSE_SERVICE in "${COMPOSE_SERVICES[@]}"; do
+    echo "Rebuilding container: $COMPOSE_SERVICE"
+    docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$COMPOSE_SERVICE"
+done
 
 send_notification \
     "[OK] Rebuild complete: $SERVICE_NAME" \
     "Service: $SERVICE_NAME
+Compose services: ${COMPOSE_SERVICES[*]}
 Repository: $REPO_FULL_NAME
 Tag: $TAG
 Status: Running

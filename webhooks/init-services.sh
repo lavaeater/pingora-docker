@@ -35,14 +35,19 @@ for SERVICE_NAME in $(jq -r 'keys[]' "$CONFIG_FILE"); do
     
     # Get the latest tag (sorted by version)
     LATEST_TAG=$(git tag -l --sort=-v:refname | head -n 1)
-    
+
     if [ -z "$LATEST_TAG" ]; then
         echo "WARNING: No tags found for $SERVICE_NAME, using default branch"
     else
         echo "Checking out latest tag: $LATEST_TAG"
         git checkout "$LATEST_TAG"
     fi
-    
+
+    # Submodules (e.g. civilization's lava_ui_builder): a plain clone/checkout
+    # leaves these as empty directories, which breaks any build that needs
+    # them. Harmless no-op for repos without submodules.
+    git submodule update --init --recursive
+
     echo ""
 done
 
@@ -52,8 +57,16 @@ echo "=== All repositories initialized ==="
 if [ "$1" = "--build" ]; then
     echo "=== Building and starting services ==="
     for SERVICE_NAME in $(jq -r 'keys[]' "$CONFIG_FILE"); do
-        echo "Building: $SERVICE_NAME"
-        docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$SERVICE_NAME"
+        # A repo may map to more than one compose service (e.g. civilization
+        # -> civilization-server + civilization-web). Falls back to
+        # [SERVICE_NAME] for repos that only ever mapped 1:1.
+        mapfile -t COMPOSE_SERVICES < <(jq -r --arg service "$SERVICE_NAME" '
+            .[$service].compose_services // [$service] | .[]
+        ' "$CONFIG_FILE")
+        for COMPOSE_SERVICE in "${COMPOSE_SERVICES[@]}"; do
+            echo "Building: $COMPOSE_SERVICE"
+            docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$COMPOSE_SERVICE"
+        done
     done
     echo "=== All services started ==="
 fi
