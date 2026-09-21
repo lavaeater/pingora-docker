@@ -4,11 +4,17 @@ This guide explains how to set up Docker Swarm for the pingora-docker project ac
 
 ## Node Distribution
 
+**Phase 1 (current):** only the Raspberry Pi and the workstation exist. Everything runs on
+the Pi except `jellyfin`, which stays on the workstation because it needs the workstation's
+GPU for hardware transcoding. The `laptop` role below is not in use yet — it's reserved for
+when a dedicated machine is added, at which point services can be redistributed off the Pi
+and, eventually, the Pi can go back to running `pingora` alone.
+
 | Node | Role Label | Services |
 |------|------------|----------|
-| Raspberry Pi | `rpi` | pingora, webhook, registry |
-| Old Laptop | `laptop` | oxidize-books, rusty-budgets, postgres |
-| Workstation | `workstation` | jellyfin, sickgear, deluge |
+| Raspberry Pi | `rpi` | pingora, webhook, registry, medusa, rusty-budgets, oxidian, oxidize-books, postgres, deluge |
+| Workstation | `workstation` | jellyfin |
+| Old Laptop (future) | `laptop` | not yet in use — see Phase 1 note above |
 
 ## SSH Setup for Remote Management
 
@@ -113,7 +119,8 @@ This outputs a join token. Save it for the worker nodes.
 
 ## Step 2: Join Worker Nodes
 
-On the **laptop** and **workstation**, run the join command from step 1:
+For Phase 1 you only need the **workstation** (for `jellyfin`); skip the laptop until you
+actually have one to add. On each worker node, run the join command from step 1:
 
 ```bash
 docker swarm join --token <TOKEN> <RPI_IP_ADDRESS>:2377
@@ -195,25 +202,25 @@ docker build -t $REGISTRY/pingora:latest .
 docker build -t $REGISTRY/webhook:latest ./webhooks
 docker build -t $REGISTRY/rusty-budgets:latest ./repos/rusty-budgets
 docker build -t $REGISTRY/oxidize-books:latest ./repos/oxidize-books
+docker build -t $REGISTRY/oxidian:latest ./repos/oxidian
 
 # Push to registry
 docker push $REGISTRY/pingora:latest
 docker push $REGISTRY/webhook:latest
 docker push $REGISTRY/rusty-budgets:latest
 docker push $REGISTRY/oxidize-books:latest
+docker push $REGISTRY/oxidian:latest
 ```
 
 ## Step 6: Prepare Volumes on Each Node
 
-### On Workstation (jellyfin, sickgear, deluge)
-Ensure these paths exist:
+### On Raspberry Pi (Phase 1: everything except jellyfin)
+The stack uses named volumes for `pingora`, `webhook`, `registry`, `medusa`, `rusty-budgets`,
+`oxidian`, `oxidize-books`, and `postgres` — Docker manages those automatically. Also make
+sure these host paths exist, since `medusa` and `deluge` bind directly to them:
 - `/media/brontosaurus/media`
 - `/home/tommie/Downloads/deluge`
 
-### On Laptop (oxidize-books, rusty-budgets, postgres)
-The stack uses named volumes, which Docker manages automatically.
-
-### On Raspberry Pi (pingora, webhook)
 Copy the config files:
 ```bash
 # Ensure these exist on the Pi
@@ -226,6 +233,15 @@ Copy the config files:
 ./webhooks/init-services.sh
 ./docker-stack.yml
 ```
+
+### On Workstation (jellyfin only, for now)
+Ensure this path exists:
+- `/media/brontosaurus/media`
+
+### On Laptop (future)
+Not in use yet — see the Phase 1 note under Node Distribution. Once added, `medusa`,
+`rusty-budgets`, `oxidian`, `oxidize-books`, and `postgres` can be relabeled off the Pi
+onto it; the stack already uses named volumes for these so no host paths need preparing.
 
 ## Step 7: Deploy the Stack
 
@@ -263,8 +279,8 @@ docker stack rm pingora
 
 When the workstation reboots or switches OS:
 - Swarm will mark the node as `Down`
-- Services (jellyfin, sickgear, deluge) become unavailable
-- When the node rejoins, services automatically restart
+- `jellyfin` becomes unavailable (everything else keeps running on the Pi)
+- When the node rejoins, `jellyfin` automatically restarts
 
 To gracefully handle planned downtime:
 ```bash
@@ -293,19 +309,24 @@ docker network inspect pingora_proxy-network
 
 ## Network Architecture
 
+Phase 1 — only the Pi and workstation exist:
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Docker Swarm Overlay Network                  │
-│                       (proxy-network)                            │
-├─────────────────┬─────────────────────┬─────────────────────────┤
-│   Raspberry Pi  │     Old Laptop      │      Workstation        │
-│   (Manager)     │     (Worker)        │      (Worker)           │
-├─────────────────┼─────────────────────┼─────────────────────────┤
-│ • pingora:8443  │ • oxidize-books:8888│ • jellyfin:8096         │
-│ • webhook:9000  │ • rusty-budgets:8666│ • sickgear:8081         │
-│ • registry:5000 │ • postgres:5432     │ • deluge:8112           │
-└─────────────────┴─────────────────────┴─────────────────────────┘
+┌─────────────────────────────────────┬─────────────────────────┐
+│              Raspberry Pi            │      Workstation        │
+│              (Manager)                │      (Worker)           │
+├───────────────────────────────────────┼─────────────────────────┤
+│ • pingora:8443    • medusa:8081        │ • jellyfin:8096         │
+│ • webhook:9000    • rusty-budgets:8666 │                         │
+│ • registry:5000   • oxidian:5173       │                         │
+│ • postgres:5432   • oxidize-books:8888 │                         │
+│                    • deluge:8112       │                         │
+└───────────────────────────────────────┴─────────────────────────┘
 ```
+
+Once a laptop (or other dedicated) node joins, `medusa`, `rusty-budgets`, `oxidian`,
+`oxidize-books`, `postgres`, and `deluge` can be relabeled onto it, freeing up the Pi —
+eventually down to just `pingora`, per the Node Distribution note above.
 
 All services can communicate via service names (e.g., `postgres`, `pingora`) through the overlay network.
 

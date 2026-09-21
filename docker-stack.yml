@@ -25,6 +25,13 @@ services:
       - INIT_SERVICES=${INIT_SERVICES:-false}
       - BUILD_ON_INIT=${BUILD_ON_INIT:-false}
       - REGISTRY=${REGISTRY:-localhost:5000}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-on}
+      - NOTIFY_EMAIL=${NOTIFY_EMAIL:-}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro
@@ -68,6 +75,10 @@ services:
         condition: on-failure
         delay: 5s
 
+  # NOTE: jellyfin needs hardware transcoding (group_add/devices in docker-compose.yml),
+  # which Swarm mode does not support on service definitions. Until it's moved into the
+  # stack for real, it keeps running via plain `docker compose` on the workstation, not
+  # as part of this stack. Left here (and pinned to `workstation`) for when that's solved.
   jellyfin:
     image: jellyfin/jellyfin
     ports:
@@ -87,24 +98,25 @@ services:
         condition: on-failure
         delay: 5s
 
-  sickgear:
-    image: sickgear/sickgear:latest
+  medusa:
+    image: lscr.io/linuxserver/medusa:latest
     environment:
-      - APP_UID=1000
-      - APP_GID=1000
-      - TZ=UTC
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
     ports:
       - "8081:8081/tcp"
     volumes:
-      - sickgear-data:/data
-      - /home/tommie/Downloads/deluge/finished/tv:/incoming
+      - medusa-config:/config
+      - /home/tommie/Downloads/deluge/finished/tv:/downloads
       - /media/brontosaurus/media/tv:/tv
+      - /media/brontosaurus/media:/media
     networks:
       - proxy-network
     deploy:
       placement:
         constraints:
-          - node.labels.role == workstation
+          - node.labels.role == rpi
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -113,6 +125,7 @@ services:
     image: ${REGISTRY:-localhost:5000}/rusty-budgets:latest
     environment:
       - DATA_FILE=/data.json
+      - DATABASE_URL=postgresql://postgres:birkobengo@postgres/rusty_budgets
     ports:
       - "8666:8666/tcp"
     volumes:
@@ -122,7 +135,21 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.role == laptop
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  oxidian:
+    image: ${REGISTRY:-localhost:5000}/oxidian:latest
+    ports:
+      - "5173:5173/tcp"
+    networks:
+      - proxy-network
+    deploy:
+      placement:
+        constraints:
+          - node.labels.role == rpi
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -134,6 +161,9 @@ services:
       OXIDIZED_BOOKS_INPUT_PATH: /books_input
       OXIDIZED_BOOKS_BOOK_PATH: /books
       OXIDIZED_TEMP_PATH: /book_temp
+      DEFAULT_USER_EMAIL: ${DEFAULT_USER_EMAIL}
+      DEFAULT_USER_USERNAME: ${DEFAULT_USER_USERNAME}
+      DEFAULT_USER_PASSWORD: ${DEFAULT_USER_PASSWORD}
     ports:
       - "8888:8888/tcp"
     volumes:
@@ -145,7 +175,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.role == laptop
+          - node.labels.role == rpi
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -165,7 +195,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.role == laptop
+          - node.labels.role == rpi
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -191,7 +221,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.role == workstation
+          - node.labels.role == rpi
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -205,7 +235,7 @@ volumes:
   registry-data:
   jellyfin-config:
   jellyfin-cache:
-  sickgear-data:
+  medusa-config:
   rusty-budgets-data:
   postgres-data:
   deluge-config:

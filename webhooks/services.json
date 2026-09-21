@@ -10,5 +10,11 @@
     "url": "git@github.com:lavaeater/oxidize-books.git",
     "build_context": ".",
     "dockerfile": "Dockerfile"
+  },
+  "oxidian": {
+    "repo": "lavaeater/oxidian",
+    "url": "git@github.com:lavaeater/oxidian.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
   }
 }
