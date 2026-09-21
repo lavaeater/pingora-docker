@@ -124,7 +124,7 @@ services:
   rusty-budgets:
     image: ${REGISTRY:-localhost:5000}/rusty-budgets:latest
     environment:
-      - DATA_FILE=/data.json
+      - DATA_FILE=/data/data.json
       - DATABASE_URL=postgresql://postgres:birkobengo@postgres/rusty_budgets
     ports:
       - "8666:8666/tcp"
@@ -187,9 +187,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: birkobengo
-      POSTGRES_DB: oxidized_books
+      POSTGRES_MULTIPLE_DATABASES: oxidized_books,rusty_budgets
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
     networks:
       - proxy-network
     deploy:

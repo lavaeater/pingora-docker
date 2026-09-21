@@ -256,6 +256,46 @@ export WEBHOOK_SECRET=your_secret_here
 docker stack deploy -c docker-stack.yml pingora
 ```
 
+## Step 8: Migrate Existing Data
+
+If you're moving `oxidize-books` and `rusty-budgets` off a machine that already has real
+data (their old Postgres DB / JSON file), do this once, after Step 7 has deployed the stack
+and `postgres` has come up (so `POSTGRES_MULTIPLE_DATABASES` has created both `oxidized_books`
+and `rusty_budgets`), and before pointing real traffic at the new services.
+
+### On the old machine (source)
+
+```bash
+# Dump the oxidize-books database from whatever's running it there
+docker exec <old-postgres-container> pg_dump -U postgres -Fc oxidized_books > oxidized_books.dump
+
+# Grab rusty-budgets' current data file (path per its old docker-compose.yml bind mount)
+cp /home/tommie/projects/rust/dioxus/rusty-budgets/data.json ./rusty-budgets-data.json
+
+# Copy both to the Pi
+scp oxidized_books.dump rusty-budgets-data.json tommie@<rpi-address>:~/migration/
+```
+
+### On the Raspberry Pi (destination)
+
+```bash
+mkdir -p ~/migration   # if scp didn't create it
+
+# Restore oxidize-books into the freshly-created oxidized_books database
+cat ~/migration/oxidized_books.dump | \
+    docker exec -i $(docker ps -qf name=pingora_postgres) pg_restore -U postgres -d oxidized_books --clean --if-exists
+
+# Seed rusty-budgets' data file so its built-in Postgres import picks it up on next start
+docker cp ~/migration/rusty-budgets-data.json $(docker ps -qf name=pingora_rusty-budgets):/data/data.json
+docker service update --force pingora_rusty-budgets
+```
+
+`rusty-budgets` already knows how to read `DATABASE_URL` and import from `DATA_FILE`, so
+restarting it with both set (already the case in `docker-stack.yml`) triggers its own
+one-time migration into `rusty_budgets`. Check its logs afterward
+(`docker service logs pingora_rusty-budgets`) and spot-check both apps before decommissioning
+the old machine's copies.
+
 ## Managing the Stack
 
 ```bash

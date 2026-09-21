@@ -145,11 +145,12 @@ services:
     environment:
       POSTGRES_USER: postgres # The PostgreSQL user (useful to connect to the database)
       POSTGRES_PASSWORD: birkobengo # The PostgreSQL password (useful to connect to the database)
-      POSTGRES_DB: oxidized_books # The PostgreSQL default database (automatically created at first launch)
+      POSTGRES_MULTIPLE_DATABASES: oxidized_books,rusty_budgets # Databases created on first boot, see postgres/init-multiple-dbs.sh
     # The `volumes` tag allows us to share a folder with our container.
     # Its syntax is as follows: [folder path on our machine]:[folder path to retrieve in the containqer]
     volumes:
       - /home/tommie/Books/oxidized_books/:/var/lib/postgresql/
+      - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
     restart: unless-stopped
     networks:
       - proxy-network
