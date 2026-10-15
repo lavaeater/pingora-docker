@@ -37,6 +37,11 @@
             "host": "oxidian",
             "port": 5173,
             "tls": false
+        },
+        "craboot.kidvhs.com": {
+            "host": "craboot",
+            "port": 8090,
+            "tls": false
         }
     }
 }

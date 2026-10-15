@@ -55,6 +55,7 @@ All on custom `proxy-network` (bridge in Compose, overlay in Swarm):
 | rusty-budgets | 8666 | Budget tracking (Rust) |
 | oxidian | 5173 | Obsidian vault browser (Rust) |
 | oxidize-books | 8888 | E-book management (Rust + PostgreSQL) |
+| craboot | 8090 | Live quiz game (Rust/Dioxus fullstack + SQLite in the `craboot-data` volume) |
 | postgres | 5432 | DB for oxidize-books, rusty-budgets |
 | deluge | 8112/6881 | Torrent client |
 

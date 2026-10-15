@@ -16,5 +16,11 @@
     "url": "git@github.com:lavaeater/oxidian.git",
     "build_context": ".",
     "dockerfile": "Dockerfile"
+  },
+  "craboot": {
+    "repo": "lavaeater/craboot",
+    "url": "git@github.com:lavaeater/craboot.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
   }
 }

@@ -12,7 +12,7 @@ and, eventually, the Pi can go back to running `pingora` alone.
 
 | Node | Role Label | Services |
 |------|------------|----------|
-| Raspberry Pi | `rpi` | pingora, webhook, registry, medusa, rusty-budgets, oxidian, oxidize-books, postgres, deluge |
+| Raspberry Pi | `rpi` | pingora, webhook, registry, medusa, rusty-budgets, oxidian, oxidize-books, craboot, postgres, deluge |
 | Workstation | `workstation` | jellyfin |
 | Old Laptop (future) | `laptop` | not yet in use — see Phase 1 note above |
 

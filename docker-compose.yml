@@ -137,6 +137,24 @@ services:
     networks:
       - proxy-network
   
+  craboot:
+    build:
+      context: ./repos/craboot
+      dockerfile: Dockerfile
+    container_name: craboot
+    environment:
+      - CRABOOT_DB=sqlite:///data/craboot.db
+      # Served over HTTPS through pingora, so the session cookie can be Secure.
+      - CRABOOT_SECURE_COOKIES=1
+    ports:
+      - 8090:8090/tcp
+    volumes:
+      # SQLite database: quizzes, accounts, uploaded images.
+      - craboot-data:/data
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
   postgres:
     # Official Postgres image from DockerHub (we use the last version)
     image: "postgres:latest"
@@ -175,6 +193,9 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
+
+volumes:
+  craboot-data:
 
 networks:
   proxy-network:

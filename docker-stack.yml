@@ -180,6 +180,27 @@ services:
         condition: on-failure
         delay: 5s
 
+  craboot:
+    image: ${REGISTRY:-localhost:5000}/craboot:latest
+    environment:
+      - CRABOOT_DB=sqlite:///data/craboot.db
+      - CRABOOT_SECURE_COOKIES=1
+    ports:
+      - "8090:8090/tcp"
+    volumes:
+      - craboot-data:/data
+    networks:
+      - proxy-network
+    deploy:
+      # One replica only: SQLite and the live-game event channels live in a single process.
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
   postgres:
     image: "postgres:latest"
     ports:
@@ -243,3 +264,4 @@ volumes:
   books-input:
   books-storage:
   books-temp:
+  craboot-data:
