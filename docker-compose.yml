@@ -22,8 +22,13 @@ services:
       - ./webhooks/rebuild.sh:/scripts/rebuild.sh:ro
       - ./webhooks/init-services.sh:/scripts/init-services.sh:ro
       - ./repos:/repos
+      # The whole project dir, read-only, so `docker compose` inside this container
+      # sees the same docker-compose.yml, .env (variable substitution, e.g.
+      # CIV_NETCODE_KEY) and env_files (decapod.env) as the host. A directory mount
+      # (not single files) so edits that replace a file (sed -i, most editors)
+      # are picked up instead of leaving a stale copy.
+      - .:/compose:ro
       - ./repos:/compose/repos
-      - ./docker-compose.yml:/compose/docker-compose.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.ssh/id_ed25519:/ssh-keys/id_ed25519:ro
       - ~/.ssh/known_hosts:/ssh-keys/known_hosts:ro
@@ -181,6 +186,20 @@ services:
     volumes:
       # SQLite database: quizzes, accounts, uploaded images.
       - craboot-data:/data
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
+  decapod:
+    build:
+      context: ./repos/decapod
+      dockerfile: Dockerfile
+    container_name: decapod
+    env_file: ./decapod.env
+    volumes:
+      # SQLite database and uploaded audio
+      - /home/tommie/projects/decapod/data:/usr/local/app/data
+      - /home/tommie/projects/decapod/media:/usr/local/app/media
     restart: unless-stopped
     networks:
       - proxy-network

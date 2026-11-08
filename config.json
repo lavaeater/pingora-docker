@@ -42,6 +42,16 @@
             "host": "craboot",
             "port": 8090,
             "tls": false
+        },
+        "civ.kidvhs.com": {
+            "host": "civilization-web",
+            "port": 80,
+            "tls": false
+        },
+        "decapod.kidvhs.com": {
+            "host": "decapod",
+            "port": 8888,
+            "tls": false
         }
     }
 }

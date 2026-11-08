@@ -12,11 +12,20 @@
   "civilization": {
     "repo": "lavaeater/civilization",
     "url": "git@github.com:lavaeater/civilization.git",
-    "compose_services": ["civilization-server", "civilization-web"]
+    "compose_services": [
+      "civilization-server",
+      "civilization-web"
+    ]
   },
   "craboot": {
     "repo": "lavaeater/craboot",
     "url": "git@github.com:lavaeater/craboot.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
+  },
+  "decapod": {
+    "repo": "lavaeater/decapod",
+    "url": "git@github.com:lavaeater/decapod.git",
     "build_context": ".",
     "dockerfile": "Dockerfile"
   }
