@@ -217,8 +217,8 @@ services:
       - /media/brontosaurus/media:/media/brontosaurus/media
     ports:
       - 8112:8112
-      - 6881:6881
-      - 6881:6881/udp
+      - 55555:6881
+      - 55555:6881/udp
       - 58846:58846 #optional
     restart: unless-stopped
     networks:
