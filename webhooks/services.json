@@ -34,5 +34,11 @@
     "url": "git@github.com:lavaeater/decapod.git",
     "build_context": ".",
     "dockerfile": "Dockerfile"
+  },
+  "exoskeleton-key": {
+    "repo": "lavaeater/exoskeleton-key",
+    "url": "git@github.com:lavaeater/exoskeleton-key.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
   }
 }

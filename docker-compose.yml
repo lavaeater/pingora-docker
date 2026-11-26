@@ -48,6 +48,8 @@ services:
     volumes:
       - ./config.json:/usr/src/pingora/config.json:ro
       - ./certs:/certs
+      # Exoskeleton Key's public key, for config.json's auth.public_key_path
+      - exoskeleton-public:/auth:ro
     ports:
       - "8443:8443"
     environment:
@@ -207,6 +209,29 @@ services:
     networks:
       - proxy-network
 
+  exoskeleton-key:
+    build:
+      context: ./repos/exoskeleton-key
+      dockerfile: Dockerfile
+    container_name: exoskeleton-key
+    # EXO_ISSUER, EXO_COOKIE_DOMAIN, GOOGLE_CLIENT_ID/SECRET (see the repo's .env.example)
+    # Optional, so a missing file doesn't stop `docker compose` for every other service.
+    env_file:
+      - path: ./exoskeleton.env
+        required: false
+    # No published ports: only reachable through pingora, as login.<domain>.
+    volumes:
+      # Signing key + SQLite (passkeys, sessions). Back this up.
+      - exoskeleton-data:/data
+      # Just the public key, shared read-only with pingora.
+      - exoskeleton-public:/public
+      # Absolute host path: the webhook runs compose from /compose inside its
+      # container, so a relative bind source would not exist on the host.
+      - /home/tommie/projects/rust/dioxus/pingora-docker/exoskeleton-users.toml:/config/users.toml:ro
+    restart: unless-stopped
+    networks:
+      - proxy-network
+
   postgres:
     # Official Postgres image from DockerHub (we use the last version)
     image: "postgres:latest"
@@ -258,6 +283,8 @@ services:
 
 volumes:
   craboot-data:
+  exoskeleton-data:
+  exoskeleton-public:
 
 networks:
   proxy-network:

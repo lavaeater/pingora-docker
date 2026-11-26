@@ -20,3 +20,5 @@ Cargo.lock
 /deluge-config
 decapod.env
 minuspod.env
+exoskeleton.env
+exoskeleton-users.toml

@@ -63,6 +63,8 @@ services:
     volumes:
       - ./config.json:/usr/src/pingora/config.json:ro
       - ./certs:/certs
+      # Exoskeleton Key's public key, for config.json's auth.public_key_path
+      - exoskeleton-public:/auth:ro
     ports:
       - "8443:8443"
     environment:
@@ -203,6 +205,26 @@ services:
         condition: on-failure
         delay: 5s
 
+  exoskeleton-key:
+    image: ${REGISTRY:-localhost:5000}/exoskeleton-key:latest
+    env_file: ./exoskeleton.env
+    volumes:
+      - exoskeleton-data:/data
+      - exoskeleton-public:/public
+      - ./exoskeleton-users.toml:/config/users.toml:ro
+    networks:
+      - proxy-network
+    deploy:
+      # One replica, on the same node as pingora: they share the exoskeleton-public
+      # volume, and pending logins live in this one process.
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == rpi
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
   postgres:
     image: "postgres:latest"
     ports:
@@ -267,3 +289,5 @@ volumes:
   books-storage:
   books-temp:
   craboot-data:
+  exoskeleton-data:
+  exoskeleton-public:

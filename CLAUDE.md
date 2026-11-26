@@ -56,6 +56,7 @@ All on custom `proxy-network` (bridge in Compose, overlay in Swarm):
 | oxidian | 5173 | Obsidian vault browser (Rust) |
 | oxidize-books | 8888 | E-book management (Rust + PostgreSQL) |
 | craboot | 8090 | Live quiz game (Rust/Dioxus fullstack + SQLite in the `craboot-data` volume) |
+| exoskeleton-key | 8700 | Single sign-on (Google/passkeys, OIDC for mobile apps); pingora checks its session cookie (`src/auth.rs`) |
 | postgres | 5432 | DB for oxidize-books, rusty-budgets |
 | deluge | 8112/6881 | Torrent client |
 
