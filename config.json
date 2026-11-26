@@ -9,7 +9,7 @@
     "debug_mode": true,
     "auth": {
         "login_url": "https://login.kidvhs.com/login",
-        "cookie_name": "session",
+        "cookie_name": "exo_session",
         "issuer": "https://login.kidvhs.com",
         "audience": "home",
         "public_key_path": "/auth/auth-public.pem"
