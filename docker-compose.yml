@@ -16,6 +16,8 @@ services:
       - SMTP_FROM=${SMTP_FROM:-}
       - SMTP_STARTTLS=${SMTP_STARTTLS:-on}
       - NOTIFY_EMAIL=${NOTIFY_EMAIL:-}
+      # Fine-grained PAT (Commit statuses: read+write) — deploys report back to GitHub.
+      - GITHUB_STATUS_TOKEN=${GITHUB_STATUS_TOKEN:-}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro
@@ -91,19 +93,20 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
-
+  
   civilization-server:
     build:
       context: ./repos/civilization
       dockerfile: Dockerfile
-      target: server
+      target: lobby            # was: server
     container_name: civilization-server
     environment:
-      - SEATS=${CIV_SEATS:-0}
-      - NUM_PLAYERS=${CIV_NUM_PLAYERS:-5}
-      - NETCODE_KEY=${CIV_NETCODE_KEY:-random}
       - PUBLIC_ADDR=civ.kidvhs.com:443
-      - PUBLIC_WS=wss://civ.kidvhs.com/ws
+      - PUBLIC_WS_BASE=wss://civ.kidvhs.com
+      - PUBLIC_URL=https://civ.kidvhs.com
+      - MAX_GAMES=10
+      # SEATS / NUM_PLAYERS / NETCODE_KEY / PUBLIC_WS are no longer used:
+        # each game gets its own from the create form and a random key.
     volumes:
       - /home/tommie/projects/civilization-saves:/app/saves
     restart: unless-stopped
@@ -242,6 +245,16 @@ services:
     restart: unless-stopped
     networks:
       - proxy-network
+  
+  minuspod:
+    image: ttlequals0/minuspod:cpu
+    container_name: minuspod
+    env_file: ./minuspod.env
+    volumes:
+      - /home/tommie/projects/minuspod/data:/app/data
+    stop_grace_period: 360s
+    restart: unless-stopped
+    networks: [proxy-network]
 
 volumes:
   craboot-data:

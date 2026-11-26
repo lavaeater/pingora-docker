@@ -52,6 +52,11 @@
             "host": "decapod",
             "port": 8888,
             "tls": false
+        },
+        "pods.kidvhs.com": {
+            "host": "minuspod",
+            "port": 8000,
+            "tls": false
         }
     }
 }

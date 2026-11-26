@@ -19,9 +19,27 @@ send_notification() {
         | msmtp "$NOTIFY_EMAIL" 2>/dev/null || echo "WARNING: Failed to send email notification"
 }
 
+# Report the deploy to GitHub as a commit status (context "deploy/home"), so
+# the tagged commit shows a check next to its CI result. No-op until
+# GITHUB_STATUS_TOKEN is set and the commit SHA is known.
+post_status() {
+    local state="$1" description="$2"
+    if [ -z "${GITHUB_STATUS_TOKEN:-}" ] || [ -z "${SHA:-}" ]; then
+        return 0
+    fi
+    curl -fsS -o /dev/null -X POST \
+        -H "Authorization: Bearer $GITHUB_STATUS_TOKEN" \
+        -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/$REPO_FULL_NAME/statuses/$SHA" \
+        -d "$(jq -n --arg s "$state" --arg d "$description" \
+              '{state: $s, description: $d, context: "deploy/home"}')" \
+        || echo "WARNING: Failed to post commit status to GitHub"
+}
+
 # Trap errors so we can notify on failure
 on_error() {
     local exit_code=$?
+    post_status failure "Deploy of ${TAG:-unknown} failed (exit $exit_code)"
     send_notification \
         "[FAIL] Rebuild failed: ${SERVICE_NAME:-unknown}" \
         "Service: ${SERVICE_NAME:-unknown}
@@ -69,6 +87,20 @@ fi
 
 echo "Matched service: $SERVICE_NAME"
 
+# One heavy build at a time on this machine. The lock file lives in the
+# bind-mounted repos dir, so it is shared with other deploys *and* with CI
+# jobs on the host (ci/ci-run.sh takes the same lock). Held until this script
+# exits. Also keeps two deploys of one service off the same checkout.
+LOCK_DIR="$REPOS_DIR/.locks"
+mkdir -p "$LOCK_DIR"
+exec 9>>"$LOCK_DIR/build.lock"
+chmod 777 "$LOCK_DIR" 2>/dev/null || true
+chmod 666 "$LOCK_DIR/build.lock" 2>/dev/null || true
+if ! flock -n 9; then
+    echo "Another build holds the lock, waiting..."
+    flock 9
+fi
+
 # Get repo URL
 REPO_URL=$(jq -r --arg service "$SERVICE_NAME" '.[$service].url' "$CONFIG_FILE")
 REPO_DIR="$REPOS_DIR/$SERVICE_NAME"
@@ -95,6 +127,9 @@ fi
 # Harmless no-op for repos without submodules.
 git submodule update --init --recursive
 
+SHA=$(git rev-parse 'HEAD^{commit}')
+post_status pending "Deploying $TAG"
+
 # A repo may map to more than one compose service (e.g. civilization ->
 # civilization-server + civilization-web, both built from the same checkout).
 # Falls back to [SERVICE_NAME] for repos that only ever mapped 1:1.
@@ -107,6 +142,8 @@ for COMPOSE_SERVICE in "${COMPOSE_SERVICES[@]}"; do
     echo "Rebuilding container: $COMPOSE_SERVICE"
     docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up --no-deps --build -d "$COMPOSE_SERVICE"
 done
+
+post_status success "Deployed $TAG"
 
 send_notification \
     "[OK] Rebuild complete: $SERVICE_NAME" \

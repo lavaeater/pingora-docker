@@ -6,11 +6,20 @@
         "key_path": "/certs/key.pem",
         "enable_h2": true
     },
+    "auth": {
+        "login_url": "https://login.snakeface.asuscomm.com/login",
+        "cookie_name": "session",
+        "issuer": "https://login.snakeface.asuscomm.com",
+        "audience": "home",
+        "public_key_path": "/certs/auth-public.pem"
+    },
     "domains": {
         "rusty.snakeface.asuscomm.com": {
             "host": "rusty-budgets",
             "port": 8666,
-            "tls": false
+            "tls": false,
+            "auth": "required",
+            "allow": ["group:family"]
         },
         "jelly.snakeface.asuscomm.com": {
             "host": "jellyfin",

@@ -1,0 +1,12 @@
+# Copy to <repo>/justfile and adjust. `just ci` is the one definition of
+# "CI passes" for the repo: the Actions runner, ci-report.sh and you at the
+# keyboard all run exactly this.
+
+# Everything CI checks, cheapest first so failures show up early.
+ci: lint test
+
+lint:
+    cargo clippy --workspace --all-targets --locked -- -D warnings
+
+test:
+    cargo nextest run --workspace --locked

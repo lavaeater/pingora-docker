@@ -1,4 +1,5 @@
 mod acme;
+mod auth;
 mod proxy;
 
 use crate::acme::{cert_covers_domains, provision_certificates, AcmeConfig};
@@ -59,7 +60,7 @@ fn main() {
     my_server.bootstrap();
 
     // Create the domain router with our configuration
-    let router = DomainRouter::new(config.clone());
+    let router = DomainRouter::new(config.clone()).expect("Invalid auth configuration");
     
     let mut proxy_service = http_proxy_service(&my_server.configuration, router);
     
@@ -82,7 +83,7 @@ fn main() {
 
     println!("Configured domains:");
     for (domain, backend) in &config.domains {
-        println!("  {} -> {}:{} (tls to backend: {})", domain, backend.host, backend.port, backend.tls);
+        println!("  {} -> {}:{} (tls to backend: {}, auth: {:?})", domain, backend.host, backend.port, backend.tls, backend.auth);
     }
 
     my_server.add_service(proxy_service);

@@ -64,6 +64,13 @@ All on custom `proxy-network` (bridge in Compose, overlay in Swarm):
 - `webhooks/swarm-rebuild.sh` (Swarm): triggered on tag pushes. Builds the image, pushes it to the private registry, and runs `docker service update`/`docker stack deploy`.
 - Both read service repo/build info from `webhooks/services.json`.
 
+### Local CI (`ci/`)
+Builds and tests run on this machine and report to GitHub; see `github-setup-guide.md`.
+- `ci/add-runner.sh` — registers a per-repo self-hosted Actions runner as a systemd user service (`gh-runner@.service`). Private repos only.
+- `ci/ci-run.sh` — runs a command under the machine-wide build lock (`repos/.locks/build.lock`). `webhooks/rebuild.sh` and `swarm-rebuild.sh` take the same lock, so CI and deploys never build concurrently.
+- `ci/ci-report.sh` — runs a command and posts the result as a commit status (`local/ci`); the path for public repos.
+- Deploys post a `deploy/home` commit status when `GITHUB_STATUS_TOKEN` is set in `.env`.
+
 ## Domain Routing
 Domains resolve to container names on the proxy network. To add a new service:
 1. Add container to `docker-compose.yml` with a service name

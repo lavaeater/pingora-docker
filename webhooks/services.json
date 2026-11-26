@@ -5,6 +5,12 @@
     "build_context": ".",
     "dockerfile": "Dockerfile"
   },
+  "oxidian": {
+    "repo": "lavaeater/oxidian",
+    "url": "git@github.com:lavaeater/oxidian.git",
+    "build_context": ".",
+    "dockerfile": "Dockerfile"
+  },
   "oxidize-books": {
     "repo": "lavaeater/oxidize-books",
     "url": "git@github.com:lavaeater/oxidize-books.git"

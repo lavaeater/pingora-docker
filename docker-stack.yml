@@ -32,6 +32,8 @@ services:
       - SMTP_FROM=${SMTP_FROM:-}
       - SMTP_STARTTLS=${SMTP_STARTTLS:-on}
       - NOTIFY_EMAIL=${NOTIFY_EMAIL:-}
+      # Fine-grained PAT (Commit statuses: read+write) — deploys report back to GitHub.
+      - GITHUB_STATUS_TOKEN=${GITHUB_STATUS_TOKEN:-}
     volumes:
       - ./webhooks/hooks.json:/config/hooks.json:ro
       - ./webhooks/services.json:/config/services.json:ro

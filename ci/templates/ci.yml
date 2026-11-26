@@ -1,0 +1,40 @@
+# Copy to <repo>/.github/workflows/ci.yml. Runs the repo's `just ci` on the
+# home machine and reports the result as a normal GitHub check.
+# See pingora-docker/github-setup-guide.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch/PR cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI (home)
+    runs-on: [self-hosted, home-ci]
+    # Includes time spent queued behind other builds on the machine.
+    timeout-minutes: 90
+    # Skip pull requests from forks. This is a convenience, NOT the security
+    # boundary — a fork can edit this file. The boundary is the repo's
+    # "require approval" setting (see the guide's public-repo section).
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Keep target/ and node_modules/ between runs — that is the point of
+          # building at home. The default (true) runs `git clean -ffdx`.
+          clean: false
+
+      # With the machine's own SSH key, so private submodules just work.
+      # Harmless for repos without submodules.
+      - name: Submodules
+        run: git submodule update --init --recursive
+
+      # ci-run.sh queues behind any other build on the machine (CI or deploy).
+      - name: CI
+        run: ci-run.sh just ci

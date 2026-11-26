@@ -19,3 +19,4 @@ Cargo.lock
 /webhooks/hooks.json
 /deluge-config
 decapod.env
+minuspod.env

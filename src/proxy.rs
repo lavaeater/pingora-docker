@@ -1,7 +1,8 @@
+use crate::auth::{AuthConfig, AuthMode, Authenticator, Claims, IDENTITY_HEADERS, is_allowed, wants_html};
 use async_trait::async_trait;
 use log::info;
 use pingora::prelude::*;
-use pingora::http::RequestHeader;
+use pingora::http::{RequestHeader, ResponseHeader};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -17,6 +18,12 @@ pub struct BackendConfig {
     pub tls: bool,
     /// SNI hostname for TLS connections (defaults to host if not specified)
     pub sni: Option<String>,
+    /// Whether a login is needed to reach this backend (default: public)
+    #[serde(default)]
+    pub auth: AuthMode,
+    /// Who may reach this backend: emails or `group:<name>`. Empty = any signed-in user.
+    #[serde(default)]
+    pub allow: Vec<String>,
 }
 
 /// TLS configuration for the proxy listener
@@ -61,16 +68,44 @@ pub struct ProxyConfig {
     pub domains: HashMap<String, BackendConfig>,
     /// Default backend for unmatched domains (optional)
     pub default_backend: Option<BackendConfig>,
+    /// Optional: single sign-on settings. Required if any backend uses `auth`.
+    pub auth: Option<AuthConfig>,
 }
 
 /// Domain-based router that implements ProxyHttp
 pub struct DomainRouter {
     config: ProxyConfig,
+    auth: Option<Authenticator>,
+}
+
+/// Per-request state: the identity verified in `request_filter`, forwarded in
+/// `upstream_request_filter`.
+#[derive(Default)]
+pub struct RequestCtx {
+    identity: Option<Claims>,
 }
 
 impl DomainRouter {
-    pub fn new(config: ProxyConfig) -> Self {
-        Self { config }
+    pub fn new(config: ProxyConfig) -> anyhow::Result<Self> {
+        let auth = config.auth.clone().map(Authenticator::new).transpose()?;
+        let protected = config
+            .domains
+            .iter()
+            .filter(|(_, b)| b.auth != AuthMode::Public)
+            .map(|(d, _)| d.as_str())
+            .collect::<Vec<_>>();
+        if auth.is_none() && !protected.is_empty() {
+            anyhow::bail!("domains {protected:?} use auth, but config.json has no \"auth\" section");
+        }
+        Ok(Self { config, auth })
+    }
+
+    async fn redirect(session: &mut Session, location: &str) -> Result<()> {
+        let mut resp = ResponseHeader::build(302, None)?;
+        resp.insert_header("Location", location)?;
+        resp.insert_header("Content-Length", "0")?;
+        resp.insert_header("Cache-Control", "no-store")?;
+        session.write_response_header(Box::new(resp), true).await
     }
 
     /// Extract the host from the request, handling both Host header and :authority pseudo-header
@@ -126,9 +161,52 @@ impl DomainRouter {
 
 #[async_trait]
 impl ProxyHttp for DomainRouter {
-    type CTX = ();
+    type CTX = RequestCtx;
 
-    fn new_ctx(&self) -> Self::CTX {}
+    fn new_ctx(&self) -> Self::CTX {
+        RequestCtx::default()
+    }
+
+    /// Runs before routing. Returning `Ok(true)` means a response was already sent.
+    async fn request_filter(&self, session: &mut Session, ctx: &mut Self::CTX) -> Result<bool> {
+        let Some(host) = self.get_host_from_session(session) else {
+            return Ok(false);
+        };
+        let Some(backend) = self.find_backend(&host) else {
+            return Ok(false); // upstream_peer reports the missing backend
+        };
+        let Some(auth) = &self.auth else {
+            return Ok(false); // no auth configured, so every backend is public
+        };
+
+        match backend.auth {
+            AuthMode::Public => Ok(false),
+            AuthMode::Optional => {
+                ctx.identity = auth.identify(session.req_header());
+                Ok(false)
+            }
+            AuthMode::Required => match auth.identify(session.req_header()) {
+                Some(claims) if is_allowed(&claims, &backend.allow) => {
+                    ctx.identity = Some(claims);
+                    Ok(false)
+                }
+                Some(claims) => {
+                    info!("{} is not allowed on {}", claims.email, host);
+                    session.respond_error(403).await?;
+                    Ok(true)
+                }
+                None if wants_html(session.req_header()) => {
+                    let location = auth.login_redirect(&host, session.req_header());
+                    Self::redirect(session, &location).await?;
+                    Ok(true)
+                }
+                None => {
+                    session.respond_error(401).await?;
+                    Ok(true)
+                }
+            },
+        }
+    }
 
     async fn upstream_peer(
         &self,
@@ -187,8 +265,23 @@ impl ProxyHttp for DomainRouter {
         &self,
         session: &mut Session,
         upstream_request: &mut RequestHeader,
-        _ctx: &mut Self::CTX,
+        ctx: &mut Self::CTX,
     ) -> Result<()> {
+        // Never let a client supply its own identity headers.
+        for name in IDENTITY_HEADERS {
+            upstream_request.remove_header(name);
+        }
+        if let Some(id) = &ctx.identity {
+            upstream_request.insert_header("X-Auth-Subject", id.sub.as_str())?;
+            upstream_request.insert_header("X-Auth-Email", id.email.as_str())?;
+            if let Some(name) = &id.name {
+                upstream_request.insert_header("X-Auth-Name", name.as_str())?;
+            }
+            if !id.groups.is_empty() {
+                upstream_request.insert_header("X-Auth-Groups", id.groups.join(","))?;
+            }
+        }
+
         // Preserve the original Host header for the backend
         // This is important for backends that use virtual hosting
         if let Some(host) = session.req_header().headers.get("host") {
@@ -197,11 +290,16 @@ impl ProxyHttp for DomainRouter {
             }
         }
         
-        // Add X-Forwarded headers for the backend to know the original request details
-        if let Some(client_addr) = session.client_addr() {
-            upstream_request.insert_header("X-Forwarded-For", client_addr.to_string())?;
+        // Add X-Forwarded headers for the backend to know the original request details.
+        // X-Forwarded-For carries the bare IP: SocketAddr's Display includes the port,
+        // which backends reject as an invalid address.
+        if let Some(ip) = session.client_addr().and_then(|a| a.as_inet()).map(|a| a.ip()) {
+            upstream_request.insert_header("X-Forwarded-For", ip.to_string())?;
         }
-        upstream_request.insert_header("X-Forwarded-Proto", "http")?;
+        let is_tls = session
+            .digest()
+            .is_some_and(|d| d.ssl_digest.is_some());
+        upstream_request.insert_header("X-Forwarded-Proto", if is_tls { "https" } else { "http" })?;
         
         Ok(())
     }
