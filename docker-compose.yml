@@ -278,6 +278,30 @@ services:
     volumes:
       - /home/tommie/projects/minuspod/data:/app/data
     stop_grace_period: 360s
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks: [proxy-network]
+
+  # Local LLM for MinusPod on the Radeon (ROCm). No published port: only
+  # containers on proxy-network can reach it, at http://ollama:11434.
+  ollama:
+    image: ollama/ollama:rocm
+    container_name: ollama
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - '989'   # render
+      - '985'   # video
+    environment:
+      # Flash attention + 8-bit KV cache roughly halve the memory a 32k context needs.
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+      # Unload the model after 10 idle minutes so the GPU is free for other things.
+      - OLLAMA_KEEP_ALIVE=10m
+    volumes:
+      - /home/tommie/projects/ollama:/root/.ollama
     restart: unless-stopped
     networks: [proxy-network]
 

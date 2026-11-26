@@ -19,7 +19,8 @@
             "port": 8666,
             "tls": false,
             "auth": "required",
-            "allow": ["group:family"]
+            "allow": ["group:family"],
+            "public_paths": ["/feeds/", "/health"]
         },
         "jelly.snakeface.asuscomm.com": {
             "host": "jellyfin",

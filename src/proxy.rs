@@ -1,4 +1,4 @@
-use crate::auth::{AuthConfig, AuthMode, Authenticator, Claims, IDENTITY_HEADERS, header_value, is_allowed, wants_html};
+use crate::auth::{AuthConfig, AuthMode, Authenticator, Claims, IDENTITY_HEADERS, header_value, is_allowed, is_public_path, wants_html};
 use async_trait::async_trait;
 use log::info;
 use pingora::prelude::*;
@@ -24,6 +24,10 @@ pub struct BackendConfig {
     /// Who may reach this backend: emails or `group:<name>`. Empty = any signed-in user.
     #[serde(default)]
     pub allow: Vec<String>,
+    /// Path prefixes that skip the login check on an `auth: required` domain,
+    /// e.g. `["/feeds/", "/health"]`. A logged-in visitor still gets identity headers.
+    #[serde(default)]
+    pub public_paths: Vec<String>,
 }
 
 /// TLS configuration for the proxy listener
@@ -179,7 +183,13 @@ impl ProxyHttp for DomainRouter {
             return Ok(false); // no auth configured, so every backend is public
         };
 
-        match backend.auth {
+        let mode = match backend.auth {
+            AuthMode::Required if is_public_path(session.req_header().uri.path(), &backend.public_paths) => {
+                AuthMode::Optional
+            }
+            mode => mode,
+        };
+        match mode {
             AuthMode::Public => Ok(false),
             AuthMode::Optional => {
                 ctx.identity = auth.identify(session.req_header());

@@ -7,6 +7,13 @@
         "enable_h2": true
     },
     "debug_mode": true,
+    "auth": {
+        "login_url": "https://login.kidvhs.com/login",
+        "cookie_name": "session",
+        "issuer": "https://login.kidvhs.com",
+        "audience": "home",
+        "public_key_path": "/auth/auth-public.pem"
+    },
     "domains": {
         "webhooks.kidvhs.com": {
             "host": "webhook",

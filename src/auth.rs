@@ -118,6 +118,33 @@ impl Authenticator {
     }
 }
 
+/// True if `path` falls under one of the `public_paths` prefixes. A prefix
+/// matches whole segments: `/feeds` matches `/feeds` and `/feeds/x`, not
+/// `/feedsecret`; `/feeds/` matches only below it.
+///
+/// Paths with dot segments, encoded dots/slashes or backslashes never count as
+/// public: a backend that normalizes `/feeds/../admin` to `/admin` would
+/// otherwise get an unauthenticated request for a protected page.
+pub fn is_public_path(path: &str, public_paths: &[String]) -> bool {
+    if public_paths.is_empty() || is_ambiguous(path) {
+        return false;
+    }
+    public_paths.iter().any(|prefix| {
+        path.strip_prefix(prefix.as_str())
+            .is_some_and(|rest| prefix.ends_with('/') || rest.is_empty() || rest.starts_with('/'))
+    })
+}
+
+fn is_ambiguous(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    path.contains('\\')
+        || path.contains("//")
+        || lower.contains("%2e")
+        || lower.contains("%2f")
+        || lower.contains("%5c")
+        || path.split('/').any(|segment| segment == "." || segment == "..")
+}
+
 /// True if `claims` match the backend's allow list. An empty list allows any
 /// signed-in user. Entries are emails, or `group:<name>`.
 pub fn is_allowed(claims: &Claims, allow: &[String]) -> bool {
@@ -176,6 +203,35 @@ mod tests {
         assert!(is_allowed(&c, &["me@example.com".into()]));
         assert!(is_allowed(&c, &["group:family".into()]));
         assert!(!is_allowed(&c, &["other@example.com".into(), "group:admins".into()]));
+    }
+
+    #[test]
+    fn public_paths_match_whole_segments() {
+        let public = vec!["/feeds".to_string(), "/static/".to_string(), "/health".to_string()];
+        for path in ["/feeds", "/feeds/", "/feeds/me.xml", "/static/app.css", "/health"] {
+            assert!(is_public_path(path, &public), "{path} should be public");
+        }
+        for path in ["/", "/feedsecret", "/static", "/healthz", "/admin", "/api/feeds"] {
+            assert!(!is_public_path(path, &public), "{path} should need login");
+        }
+        assert!(!is_public_path("/feeds", &[]));
+    }
+
+    #[test]
+    fn traversal_tricks_are_never_public() {
+        let public = vec!["/feeds/".to_string()];
+        for path in [
+            "/feeds/../admin",
+            "/feeds/./x",
+            "/feeds/%2e%2e/admin",
+            "/feeds/%2E%2E/admin",
+            "/feeds/..%2fadmin",
+            "/feeds/..%5cadmin",
+            "/feeds/..\\admin",
+            "/feeds//x",
+        ] {
+            assert!(!is_public_path(path, &public), "{path} must need login");
+        }
     }
 
     #[test]
