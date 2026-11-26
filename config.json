@@ -57,6 +57,11 @@
             "host": "minuspod",
             "port": 8000,
             "tls": false
+        },
+        "login.kidvhs.com": {
+            "host": "exoskeleton-key",
+            "port": 8700,
+            "tls": false
         }
     }
 }

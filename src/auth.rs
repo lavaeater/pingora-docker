@@ -7,7 +7,7 @@
 //! Pingora only needs the public key, so a check costs no network round trip.
 
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
-use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+use percent_encoding::{AsciiSet, CONTROLS, NON_ALPHANUMERIC, utf8_percent_encode};
 use pingora::http::RequestHeader;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +15,15 @@ use serde::{Deserialize, Serialize};
 /// so a backend can trust them whenever they are present.
 pub const IDENTITY_HEADERS: [&str; 4] =
     ["X-Auth-Subject", "X-Auth-Email", "X-Auth-Name", "X-Auth-Groups"];
+
+/// Header values must be visible ASCII, so identity values are percent-encoded
+/// UTF-8: "Åsa" becomes "%C3%85sa". `%` itself is encoded so decoding is exact.
+/// Apps decode with `percent_encoding::percent_decode_str`.
+const HEADER_UNSAFE: &AsciiSet = &CONTROLS.add(b'%');
+
+pub fn header_value(value: &str) -> String {
+    utf8_percent_encode(value, HEADER_UNSAFE).to_string()
+}
 
 /// Global auth settings (`"auth"` in config.json).
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -167,6 +176,14 @@ mod tests {
         assert!(is_allowed(&c, &["me@example.com".into()]));
         assert!(is_allowed(&c, &["group:family".into()]));
         assert!(!is_allowed(&c, &["other@example.com".into(), "group:admins".into()]));
+    }
+
+    #[test]
+    fn identity_header_values_are_ascii() {
+        assert_eq!(header_value("Tommie Nygren"), "Tommie Nygren");
+        assert_eq!(header_value("Åsa 100%"), "%C3%85sa 100%25");
+        let mut req = RequestHeader::build("GET", b"/", None).unwrap();
+        req.insert_header("X-Auth-Name", header_value("Åsa")).unwrap();
     }
 
     #[test]

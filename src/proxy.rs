@@ -1,4 +1,4 @@
-use crate::auth::{AuthConfig, AuthMode, Authenticator, Claims, IDENTITY_HEADERS, is_allowed, wants_html};
+use crate::auth::{AuthConfig, AuthMode, Authenticator, Claims, IDENTITY_HEADERS, header_value, is_allowed, wants_html};
 use async_trait::async_trait;
 use log::info;
 use pingora::prelude::*;
@@ -272,13 +272,13 @@ impl ProxyHttp for DomainRouter {
             upstream_request.remove_header(name);
         }
         if let Some(id) = &ctx.identity {
-            upstream_request.insert_header("X-Auth-Subject", id.sub.as_str())?;
-            upstream_request.insert_header("X-Auth-Email", id.email.as_str())?;
+            upstream_request.insert_header("X-Auth-Subject", header_value(&id.sub))?;
+            upstream_request.insert_header("X-Auth-Email", header_value(&id.email))?;
             if let Some(name) = &id.name {
-                upstream_request.insert_header("X-Auth-Name", name.as_str())?;
+                upstream_request.insert_header("X-Auth-Name", header_value(name))?;
             }
             if !id.groups.is_empty() {
-                upstream_request.insert_header("X-Auth-Groups", id.groups.join(","))?;
+                upstream_request.insert_header("X-Auth-Groups", header_value(&id.groups.join(",")))?;
             }
         }
 
